@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUpIcon } from "lucide-react";
+import { TrendingUpIcon, DollarSignIcon, BarChart3Icon } from "lucide-react";
 
 interface RecommendationCardProps {
   symbol: string;
@@ -8,6 +8,11 @@ interface RecommendationCardProps {
   recommendation: "Buy" | "Sell" | "Hold";
   confidence: number;
   reason: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  vwap: number;
 }
 
 const RecommendationCard = ({
@@ -16,6 +21,11 @@ const RecommendationCard = ({
   recommendation,
   confidence,
   reason,
+  price,
+  change,
+  changePercent,
+  volume,
+  vwap,
 }: RecommendationCardProps) => {
   const getBadgeColor = (rec: string) => {
     switch (rec) {
@@ -26,6 +36,13 @@ const RecommendationCard = ({
       default:
         return "bg-muted text-muted-foreground hover:bg-muted/80";
     }
+  };
+
+  const formatNumber = (num: number) => {
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+    return num.toFixed(2);
   };
 
   return (
@@ -41,6 +58,28 @@ const RecommendationCard = ({
         </div>
         <TrendingUpIcon className="text-muted-foreground" />
       </div>
+      
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <p className="text-sm text-muted-foreground mb-1">Current Price</p>
+          <p className="text-lg font-semibold">${price.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground mb-1">Change</p>
+          <p className={`text-lg font-semibold ${changePercent >= 0 ? 'text-success' : 'text-error'}`}>
+            {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground mb-1">Volume</p>
+          <p className="text-lg font-semibold">{formatNumber(volume)}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground mb-1">VWAP</p>
+          <p className="text-lg font-semibold">${vwap.toFixed(2)}</p>
+        </div>
+      </div>
+      
       <p className="text-sm text-muted-foreground">{reason}</p>
     </Card>
   );

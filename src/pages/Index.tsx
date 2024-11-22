@@ -1,36 +1,40 @@
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { SearchIcon } from "lucide-react";
 import MarketOverview from "@/components/MarketOverview";
 import StockCard from "@/components/StockCard";
 import RecommendationCard from "@/components/RecommendationCard";
-import { getTopStocks, getDailyPrices, connectWebSocket, disconnectWebSocket } from "@/lib/api";
+import { getTopStocks, getRecommendedStocks, connectWebSocket, disconnectWebSocket } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "@/components/ui/use-toast";
 import SearchBar from "@/components/SearchBar";
+import { getAIAnalysis } from "@/lib/openai";
 
 const Index = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [liveData, setLiveData] = useState<Record<string, number>>({});
 
-  const { data: topStocks, isLoading: isLoadingStocks } = useQuery({
+  const { data: topStocks } = useQuery({
     queryKey: ['topStocks'],
     queryFn: getTopStocks,
-    refetchInterval: 60000, // Refetch every 60 seconds
+    refetchInterval: 60000, // Refetch every minute
   });
 
-  const { data: stockPrices, isLoading: isLoadingPrices } = useQuery({
-    queryKey: ['stockPrices', topStocks],
+  const { data: recommendedStocks } = useQuery({
+    queryKey: ['recommendedStocks'],
+    queryFn: getRecommendedStocks,
+    refetchInterval: 1800000, // Refetch every 30 minutes
+  });
+
+  const { data: aiReasons } = useQuery({
+    queryKey: ['aiReasons', recommendedStocks],
     queryFn: async () => {
-      if (!topStocks) return {};
-      const prices: Record<string, any> = {};
-      for (const stock of topStocks) {
-        prices[stock.ticker] = await getDailyPrices(stock.ticker);
+      if (!recommendedStocks) return {};
+      const reasons: Record<string, string> = {};
+      for (const stock of recommendedStocks) {
+        const analysis = await getAIAnalysis(stock.ticker, stock);
+        reasons[stock.ticker] = analysis.strategy;
       }
-      return prices;
+      return reasons;
     },
-    enabled: !!topStocks,
-    refetchInterval: 60000, // Refetch every 60 seconds
+    enabled: !!recommendedStocks,
+    refetchInterval: 1800000, // Refetch every 30 minutes
   });
 
   useEffect(() => {
@@ -51,29 +55,6 @@ const Index = () => {
     return () => disconnectWebSocket();
   }, []);
 
-  if (isLoadingStocks || isLoadingPrices) {
-    return (
-      <div className="min-h-screen bg-background p-6 space-y-6 fade-in">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-4 bg-muted rounded w-1/3"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const getStockChange = (symbol: string) => {
-    if (!stockPrices?.[symbol]) return { change: 0, changePercent: 0 };
-    const dailyData = stockPrices[symbol];
-    const change = liveData[symbol] 
-      ? liveData[symbol] - dailyData.o
-      : dailyData.c - dailyData.o;
-    const changePercent = (change / dailyData.o) * 100;
-    return { change, changePercent };
-  };
-
   return (
     <div className="min-h-screen bg-background p-6 space-y-6 fade-in">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -89,33 +70,35 @@ const Index = () => {
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Top Movers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topStocks?.map((stock) => {
-              const { change, changePercent } = getStockChange(stock.ticker);
-              return (
-                <StockCard
-                  key={stock.ticker}
-                  symbol={stock.ticker}
-                  name={stock.name}
-                  price={liveData[stock.ticker] || (stockPrices?.[stock.ticker]?.c || 0)}
-                  change={change}
-                  changePercent={changePercent}
-                />
-              );
-            })}
+            {topStocks?.map((stock) => (
+              <StockCard
+                key={stock.ticker}
+                symbol={stock.ticker}
+                name={stock.name}
+                price={liveData[stock.ticker] || stock.price}
+                change={stock.change}
+                changePercent={stock.changePercent}
+              />
+            ))}
           </div>
         </div>
 
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">AI Recommendations</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {topStocks?.slice(0, 2).map((stock) => (
+            {recommendedStocks?.map((stock) => (
               <RecommendationCard
                 key={stock.ticker}
                 symbol={stock.ticker}
                 name={stock.name}
-                recommendation={Math.random() > 0.5 ? "Buy" : "Hold"}
+                recommendation={stock.changePercent >= 0 ? "Buy" : "Hold"}
                 confidence={Math.floor(Math.random() * 30) + 70}
-                reason="Based on current market trends and technical analysis"
+                reason={aiReasons?.[stock.ticker] || "Analyzing market data..."}
+                price={liveData[stock.ticker] || stock.price}
+                change={stock.change}
+                changePercent={stock.changePercent}
+                volume={stock.volume}
+                vwap={stock.vwap}
               />
             ))}
           </div>
