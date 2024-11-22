@@ -69,21 +69,33 @@ export const getTopStocks = async (): Promise<StockTicker[]> => {
   }
 };
 
-export const getDailyPrices = async (symbol: string): Promise<DailyPrice> => {
+export const getDailyPrices = async (symbol: string): Promise<any> => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
     const response = await fetch(
-      `${BASE_URL}/v2/aggs/ticker/${symbol}/range/1/day/${today}/${today}?adjusted=true&sort=desc&limit=1&apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v2/aggs/ticker/${symbol}/range/1/hour/${startDate}/${endDate}?adjusted=true&sort=asc&limit=168&apiKey=${POLYGON_API_KEY}`
     );
+    
     if (!response.ok) throw new Error('Failed to fetch daily prices');
     const data = await response.json();
-    return data.results[0];
+    
+    if (!data.results) throw new Error('No results found');
+
+    // Transform the data for the chart
+    const chartData = data.results.map((item: any) => ({
+      timestamp: new Date(item.t).toLocaleString(),
+      price: item.c,
+    }));
+
+    // Return both the latest price data and the chart data
+    return {
+      ...data.results[data.results.length - 1],
+      chartData,
+    };
   } catch (error) {
-    toast({
-      title: "Error fetching daily prices",
-      description: error instanceof Error ? error.message : "Unknown error occurred",
-      variant: "destructive",
-    });
+    console.error('Error fetching daily prices:', error);
     throw error;
   }
 };
