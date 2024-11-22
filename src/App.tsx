@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Index from "./pages/Index";
+import StockAnalysis from "./pages/StockAnalysis";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/stock/:symbol" element={<StockAnalysis />} />
             </Routes>
           </BrowserRouter>
         </div>

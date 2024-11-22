@@ -7,6 +7,7 @@ import RecommendationCard from "@/components/RecommendationCard";
 import { getTopStocks, getDailyPrices, connectWebSocket, disconnectWebSocket } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
+import SearchBar from "@/components/SearchBar";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,15 +82,7 @@ const Index = () => {
           <p className="text-muted-foreground">AI-Powered Stock Analysis & Recommendations</p>
         </div>
 
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-10"
-            placeholder="Search stocks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchBar />
 
         <MarketOverview />
 

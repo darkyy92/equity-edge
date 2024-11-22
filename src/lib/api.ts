@@ -102,7 +102,7 @@ export const connectWebSocket = (onMessage: (data: any) => void) => {
         action: 'auth',
         params: POLYGON_API_KEY
       }));
-      
+
       ws.send(JSON.stringify({
         action: 'subscribe',
         params: 'T.AAPL,T.MSFT,T.GOOGL'
@@ -134,5 +134,23 @@ export const disconnectWebSocket = () => {
   if (ws) {
     ws.close();
     ws = null;
+  }
+};
+
+export const searchStocks = async (query: string): Promise<StockTicker[]> => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/v3/reference/tickers?search=${encodeURIComponent(query)}&active=true&sort=ticker&order=asc&limit=10&apiKey=${POLYGON_API_KEY}`
+    );
+    if (!response.ok) throw new Error('Failed to search stocks');
+    const data = await response.json();
+    return data.results;
+  } catch (error) {
+    toast({
+      title: "Error searching stocks",
+      description: error instanceof Error ? error.message : "Unknown error occurred",
+      variant: "destructive",
+    });
+    throw error;
   }
 };
