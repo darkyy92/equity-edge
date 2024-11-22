@@ -22,7 +22,7 @@ const processQueue = async () => {
     if (request) {
       try {
         await request();
-        await wait(2000); // Increased wait time between requests
+        await wait(2000);
       } catch (error) {
         console.error('Error processing queued request:', error);
       }
@@ -41,7 +41,7 @@ const getFallbackAnalysis = (symbol: string): AIAnalysisResponse => ({
 const makeOpenAIRequest = async (messages: any[]) => {
   const maxRetries = 3;
   let retryCount = 0;
-  let baseDelay = 2000; // Increased base delay
+  let baseDelay = 2000;
 
   while (retryCount < maxRetries) {
     try {
@@ -52,10 +52,10 @@ const makeOpenAIRequest = async (messages: any[]) => {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',  // Updated model name
           messages,
           temperature: 0.7,
-          max_tokens: 300, // Further reduced tokens
+          max_tokens: 300,
         }),
       });
 

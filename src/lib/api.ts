@@ -7,7 +7,7 @@ const BASE_URL = 'https://api.polygon.io';
 export const getTopStocks = async (): Promise<StockTicker[]> => {
   try {
     const response = await fetch(
-      `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/gainers?timespan=week&limit=3&apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/gainers?timespan=week&limit=6&apiKey=${POLYGON_API_KEY}`
     );
     if (!response.ok) throw new Error('Failed to fetch top stocks');
     const data = await response.json();
