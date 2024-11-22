@@ -15,6 +15,7 @@ const Index = () => {
   const { data: topStocks, isLoading: isLoadingStocks } = useQuery({
     queryKey: ['topStocks'],
     queryFn: getTopStocks,
+    refetchInterval: 60000, // Refetch every 60 seconds
   });
 
   const { data: stockPrices, isLoading: isLoadingPrices } = useQuery({
@@ -28,6 +29,7 @@ const Index = () => {
       return prices;
     },
     enabled: !!topStocks,
+    refetchInterval: 60000, // Refetch every 60 seconds
   });
 
   useEffect(() => {

@@ -19,6 +19,7 @@ const MarketOverview = () => {
       }
       return data;
     },
+    refetchInterval: 60000, // Refetch every 60 seconds
   });
 
   const getChangePercent = (symbol: string) => {
