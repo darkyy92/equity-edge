@@ -1,58 +1,29 @@
 import { toast } from "@/components/ui/use-toast";
+import { StockTicker } from "./types";
 
 const POLYGON_API_KEY = 's3Kgk9rqPEj4IBl3Bo8Aiv7y53slSpSc';
 const BASE_URL = 'https://api.polygon.io';
 
-export interface MarketStatus {
-  market: string;
-  serverTime: string;
-  exchanges: Record<string, string>;
-  currencies: Record<string, string>;
-}
-
-export interface StockTicker {
-  ticker: string;
-  name: string;
-  market: string;
-  locale: string;
-  primary_exchange: string;
-  type: string;
-  active: boolean;
-  currency_name: string;
-  cik: string;
-  composite_figi: string;
-  share_class_figi: string;
-  last_updated_utc: string;
-}
-
 export const getTopStocks = async (): Promise<StockTicker[]> => {
   try {
-    // Get top gainers for the week
     const response = await fetch(
       `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/gainers?timespan=week&limit=3&apiKey=${POLYGON_API_KEY}`
     );
     if (!response.ok) throw new Error('Failed to fetch top stocks');
     const data = await response.json();
     
-    // Transform the response to match our StockTicker interface
     const results = await Promise.all(data.tickers.map(async (ticker: any) => {
       const detailsResponse = await fetch(
         `${BASE_URL}/v3/reference/tickers/${ticker.ticker}?apiKey=${POLYGON_API_KEY}`
       );
       const details = await detailsResponse.json();
       return {
-        ticker: ticker.ticker,
-        name: details.results.name,
-        market: details.results.market,
-        locale: details.results.locale,
-        primary_exchange: details.results.primary_exchange,
-        type: details.results.type,
-        active: details.results.active,
-        currency_name: details.results.currency_name,
-        last_updated_utc: details.results.last_updated_utc,
+        ...details.results,
         price: ticker.day.c,
         change: ticker.day.c - ticker.day.o,
-        changePercent: ((ticker.day.c - ticker.day.o) / ticker.day.o) * 100
+        changePercent: ((ticker.day.c - ticker.day.o) / ticker.day.o) * 100,
+        volume: ticker.day.v,
+        vwap: ticker.day.vw
       };
     }));
     
@@ -124,55 +95,6 @@ export const getDailyPrices = async (symbol: string, timeRange: string = "1W"): 
   }
 };
 
-let ws: WebSocket | null = null;
-
-export const connectWebSocket = (onMessage: (data: any) => void) => {
-  if (ws) return;
-
-  ws = new WebSocket('wss://delayed.polygon.io/stocks');
-
-  ws.onopen = () => {
-    console.log('Connected to Polygon WebSocket');
-    if (ws) {
-      ws.send(JSON.stringify({
-        action: 'auth',
-        params: POLYGON_API_KEY
-      }));
-
-      ws.send(JSON.stringify({
-        action: 'subscribe',
-        params: 'T.AAPL,T.MSFT,T.GOOGL'
-      }));
-    }
-  };
-
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    onMessage(data);
-  };
-
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-    toast({
-      title: "WebSocket Error",
-      description: "Failed to connect to live updates",
-      variant: "destructive",
-    });
-  };
-
-  ws.onclose = () => {
-    console.log('Disconnected from Polygon WebSocket');
-    ws = null;
-  };
-};
-
-export const disconnectWebSocket = () => {
-  if (ws) {
-    ws.close();
-    ws = null;
-  }
-};
-
 export const searchStocks = async (query: string): Promise<StockTicker[]> => {
   try {
     const response = await fetch(
@@ -217,12 +139,14 @@ export const getRecommendedStocks = async (): Promise<StockTicker[]> => {
       })
     );
     
-    // Sort by various factors to determine best recommendations
     return stocks
-      .sort((a, b) => b.changePercent - a.changePercent)
+      .sort((a, b) => b.changePercent! - a.changePercent!)
       .slice(0, 2);
   } catch (error) {
     console.error('Error fetching recommended stocks:', error);
     throw error;
   }
 };
+
+export * from './types';
+export * from './websocket';
