@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import LastUpdated from "@/components/LastUpdated";
-import { getAIAnalysis } from "@/lib/openai";
+import { getAIAnalysis, type AIAnalysisResponse } from "@/lib/openai";
 
 const StockAnalysis = () => {
   const { symbol } = useParams();
@@ -20,7 +20,7 @@ const StockAnalysis = () => {
     gcTime: 300000,
   });
 
-  const { data: aiAnalysis } = useQuery({
+  const { data: aiAnalysis } = useQuery<AIAnalysisResponse | null>({
     queryKey: ['aiAnalysis', symbol],
     queryFn: () => getAIAnalysis(symbol || '', priceData),
     enabled: !!symbol && !!priceData,

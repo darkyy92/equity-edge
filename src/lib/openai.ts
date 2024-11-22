@@ -4,6 +4,13 @@ const OPENAI_API_KEY = 'sk-proj-CoKHz2_cd7UE4LvFUGHX27oVlW-5oLMXMGVxqnF2h97FD3Oa
 let requestQueue: Array<() => Promise<any>> = [];
 let isProcessingQueue = false;
 
+export interface AIAnalysisResponse {
+  strategy: string;
+  technical: string;
+  market: string;
+  risks: string;
+}
+
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const processQueue = async () => {
@@ -71,7 +78,7 @@ const makeOpenAIRequest = async (messages: any[]) => {
   }
 };
 
-export const getAIAnalysis = async (symbol: string, stockData: any) => {
+export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIAnalysisResponse | null> => {
   try {
     return new Promise((resolve, reject) => {
       const request = async () => {
@@ -91,7 +98,7 @@ export const getAIAnalysis = async (symbol: string, stockData: any) => {
           const analysis = data.choices[0].message.content;
 
           // Parse the analysis into sections
-          const sections = {
+          const sections: AIAnalysisResponse = {
             strategy: extractSection(analysis, "Investment Strategy"),
             technical: extractSection(analysis, "Technical Analysis"),
             market: extractSection(analysis, "Market Analysis"),
