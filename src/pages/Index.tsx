@@ -3,6 +3,7 @@ import MarketOverview from "@/components/MarketOverview";
 import StockCard from "@/components/StockCard";
 import RecommendationCard from "@/components/RecommendationCard";
 import { getTopStocks, getRecommendedStocks, connectWebSocket, disconnectWebSocket } from "@/lib/api";
+import { StockTicker } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import SearchBar from "@/components/SearchBar";
 import { getAIAnalysis } from "@/lib/openai";
@@ -10,13 +11,13 @@ import { getAIAnalysis } from "@/lib/openai";
 const Index = () => {
   const [liveData, setLiveData] = useState<Record<string, number>>({});
 
-  const { data: topStocks } = useQuery({
+  const { data: topStocks } = useQuery<StockTicker[]>({
     queryKey: ['topStocks'],
     queryFn: getTopStocks,
     refetchInterval: 60000, // Refetch every minute
   });
 
-  const { data: recommendedStocks } = useQuery({
+  const { data: recommendedStocks } = useQuery<StockTicker[]>({
     queryKey: ['recommendedStocks'],
     queryFn: getRecommendedStocks,
     refetchInterval: 1800000, // Refetch every 30 minutes
@@ -75,9 +76,9 @@ const Index = () => {
                 key={stock.ticker}
                 symbol={stock.ticker}
                 name={stock.name}
-                price={liveData[stock.ticker] || stock.price}
-                change={stock.change}
-                changePercent={stock.changePercent}
+                price={liveData[stock.ticker] ?? stock.price ?? 0}
+                change={stock.change ?? 0}
+                changePercent={stock.changePercent ?? 0}
               />
             ))}
           </div>
@@ -91,14 +92,14 @@ const Index = () => {
                 key={stock.ticker}
                 symbol={stock.ticker}
                 name={stock.name}
-                recommendation={stock.changePercent >= 0 ? "Buy" : "Hold"}
+                recommendation={stock.changePercent && stock.changePercent >= 0 ? "Buy" : "Hold"}
                 confidence={Math.floor(Math.random() * 30) + 70}
                 reason={aiReasons?.[stock.ticker] || "Analyzing market data..."}
-                price={liveData[stock.ticker] || stock.price}
-                change={stock.change}
-                changePercent={stock.changePercent}
-                volume={stock.volume}
-                vwap={stock.vwap}
+                price={liveData[stock.ticker] ?? stock.price ?? 0}
+                change={stock.change ?? 0}
+                changePercent={stock.changePercent ?? 0}
+                volume={stock.volume ?? 0}
+                vwap={stock.vwap ?? 0}
               />
             ))}
           </div>
