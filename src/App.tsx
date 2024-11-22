@@ -13,7 +13,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60000,
-      cacheTime: 300000,
+      gcTime: 300000,
     },
   },
 });

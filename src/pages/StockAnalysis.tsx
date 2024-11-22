@@ -17,7 +17,7 @@ const StockAnalysis = () => {
     enabled: !!symbol,
     refetchInterval: 60000,
     staleTime: 60000,
-    cacheTime: 300000,
+    gcTime: 300000,
   });
 
   const { data: aiAnalysis } = useQuery({
@@ -26,7 +26,7 @@ const StockAnalysis = () => {
     enabled: !!symbol && !!priceData,
     refetchInterval: 300000,
     staleTime: 300000,
-    cacheTime: 300000,
+    gcTime: 300000,
   });
 
   if (!symbol) return <div>Invalid stock symbol</div>;
