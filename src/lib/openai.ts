@@ -49,7 +49,7 @@ const makeOpenAIRequest = async (messages: any[]) => {
           model: 'gpt-4o-mini',
           messages,
           temperature: 0.7,
-          max_tokens: 1000,
+          max_tokens: 500, // Reduced to help with quota limits
         }),
       });
 
@@ -57,8 +57,8 @@ const makeOpenAIRequest = async (messages: any[]) => {
         const errorData = await response.json();
         
         if (response.status === 429) {
-          // Rate limit exceeded, wait and retry
           const delay = baseDelay * Math.pow(2, retryCount);
+          console.log(`Rate limit exceeded, waiting ${delay}ms before retry`);
           await wait(delay);
           retryCount++;
           continue;
@@ -67,8 +67,10 @@ const makeOpenAIRequest = async (messages: any[]) => {
         throw new Error(errorData.error?.message || 'OpenAI API request failed');
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error) {
+      console.error('OpenAI API error:', error);
       if (retryCount === maxRetries - 1) {
         throw error;
       }
@@ -86,7 +88,7 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
           const messages = [
             {
               role: 'system',
-              content: 'You are a financial analyst. Provide a comprehensive analysis of the stock based on the provided data. Include investment strategy, technical analysis, market analysis, and risk factors.',
+              content: 'You are a financial analyst. Provide a brief analysis of the stock based on the provided data. Include investment strategy, technical analysis, market analysis, and risk factors.',
             },
             {
               role: 'user',
