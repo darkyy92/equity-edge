@@ -1,4 +1,4 @@
-const OPENAI_API_KEY = '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';
+const OPENAI_API_KEY = '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';
 
 // Queue to manage API requests
 let requestQueue: Array<() => Promise<any>> = [];
