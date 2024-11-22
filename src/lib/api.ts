@@ -26,14 +26,14 @@ export interface StockTicker {
 }
 
 export interface DailyPrice {
-  c: number; // close price
-  h: number; // highest price
-  l: number; // lowest price
-  n: number; // number of transactions
-  o: number; // open price
-  t: number; // timestamp
-  v: number; // trading volume
-  vw: number; // volume weighted average price
+  c: number;
+  h: number;
+  l: number;
+  n: number;
+  o: number;
+  t: number;
+  v: number;
+  vw: number;
 }
 
 export const getMarketStatus = async (): Promise<MarketStatus> => {
@@ -54,7 +54,7 @@ export const getMarketStatus = async (): Promise<MarketStatus> => {
 export const getTopStocks = async (): Promise<StockTicker[]> => {
   try {
     const response = await fetch(
-      `${BASE_URL}/v3/reference/tickers?market=stocks&active=true&sort=market_cap&order=desc&limit=3&apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v3/reference/tickers?market=stocks&active=true&sort=market_value&order=desc&limit=3&apiKey=${POLYGON_API_KEY}`
     );
     if (!response.ok) throw new Error('Failed to fetch top stocks');
     const data = await response.json();
@@ -103,7 +103,6 @@ export const connectWebSocket = (onMessage: (data: any) => void) => {
         params: POLYGON_API_KEY
       }));
       
-      // Subscribe to some major stocks
       ws.send(JSON.stringify({
         action: 'subscribe',
         params: 'T.AAPL,T.MSFT,T.GOOGL'
