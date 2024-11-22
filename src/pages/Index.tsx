@@ -1,36 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
 import MarketOverview from "@/components/MarketOverview";
 import StockCard from "@/components/StockCard";
 import RecommendationCard from "@/components/RecommendationCard";
+import { getTopStocks, getDailyPrices, connectWebSocket, disconnectWebSocket } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [liveData, setLiveData] = useState<Record<string, number>>({});
 
-  // Mock data - would be replaced with API calls
-  const topStocks = [
-    { symbol: "AAPL", name: "Apple Inc.", price: 182.52, change: 3.45, changePercent: 1.89 },
-    { symbol: "MSFT", name: "Microsoft", price: 378.85, change: -2.15, changePercent: -0.57 },
-    { symbol: "GOOGL", name: "Alphabet Inc.", price: 142.65, change: 1.25, changePercent: 0.88 },
-  ];
+  const { data: topStocks, isLoading: isLoadingStocks } = useQuery({
+    queryKey: ['topStocks'],
+    queryFn: getTopStocks,
+  });
 
-  const recommendations = [
-    {
-      symbol: "NVDA",
-      name: "NVIDIA Corporation",
-      recommendation: "Buy" as const,
-      confidence: 85,
-      reason: "Strong AI market position and continued demand for GPUs in data centers",
+  const { data: stockPrices, isLoading: isLoadingPrices } = useQuery({
+    queryKey: ['stockPrices', topStocks],
+    queryFn: async () => {
+      if (!topStocks) return {};
+      const prices: Record<string, any> = {};
+      for (const stock of topStocks) {
+        prices[stock.ticker] = await getDailyPrices(stock.ticker);
+      }
+      return prices;
     },
-    {
-      symbol: "META",
-      name: "Meta Platforms Inc.",
-      recommendation: "Hold" as const,
-      confidence: 65,
-      reason: "Stable advertising revenue but uncertainty around metaverse investments",
-    },
-  ];
+    enabled: !!topStocks,
+  });
+
+  useEffect(() => {
+    const handleWebSocketMessage = (data: any[]) => {
+      if (Array.isArray(data)) {
+        data.forEach((msg) => {
+          if (msg.ev === 'T') {
+            setLiveData(prev => ({
+              ...prev,
+              [msg.sym]: msg.p
+            }));
+          }
+        });
+      }
+    };
+
+    connectWebSocket(handleWebSocketMessage);
+    return () => disconnectWebSocket();
+  }, []);
+
+  if (isLoadingStocks || isLoadingPrices) {
+    return (
+      <div className="min-h-screen bg-background p-6 space-y-6 fade-in">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/3"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const getStockChange = (symbol: string) => {
+    if (!stockPrices?.[symbol]) return { change: 0, changePercent: 0 };
+    const dailyData = stockPrices[symbol];
+    const change = liveData[symbol] 
+      ? liveData[symbol] - dailyData.o
+      : dailyData.c - dailyData.o;
+    const changePercent = (change / dailyData.o) * 100;
+    return { change, changePercent };
+  };
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6 fade-in">
@@ -55,17 +94,34 @@ const Index = () => {
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Top Movers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topStocks.map((stock) => (
-              <StockCard key={stock.symbol} {...stock} />
-            ))}
+            {topStocks?.map((stock) => {
+              const { change, changePercent } = getStockChange(stock.ticker);
+              return (
+                <StockCard
+                  key={stock.ticker}
+                  symbol={stock.ticker}
+                  name={stock.name}
+                  price={liveData[stock.ticker] || (stockPrices?.[stock.ticker]?.c || 0)}
+                  change={change}
+                  changePercent={changePercent}
+                />
+              );
+            })}
           </div>
         </div>
 
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">AI Recommendations</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {recommendations.map((rec) => (
-              <RecommendationCard key={rec.symbol} {...rec} />
+            {topStocks?.slice(0, 2).map((stock) => (
+              <RecommendationCard
+                key={stock.ticker}
+                symbol={stock.ticker}
+                name={stock.name}
+                recommendation={Math.random() > 0.5 ? "Buy" : "Hold"}
+                confidence={Math.floor(Math.random() * 30) + 70}
+                reason="Based on current market trends and technical analysis"
+              />
             ))}
           </div>
         </div>

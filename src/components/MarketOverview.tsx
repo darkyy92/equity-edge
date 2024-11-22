@@ -1,7 +1,32 @@
 import { Card } from "@/components/ui/card";
 import { ChartLineIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getDailyPrices } from "@/lib/api";
 
 const MarketOverview = () => {
+  const indices = {
+    "SPY": "S&P 500",
+    "QQQ": "NASDAQ",
+    "DIA": "DOW JONES"
+  };
+
+  const { data: prices } = useQuery({
+    queryKey: ['marketIndices'],
+    queryFn: async () => {
+      const data: Record<string, any> = {};
+      for (const symbol of Object.keys(indices)) {
+        data[symbol] = await getDailyPrices(symbol);
+      }
+      return data;
+    },
+  });
+
+  const getChangePercent = (symbol: string) => {
+    if (!prices?.[symbol]) return 0;
+    const data = prices[symbol];
+    return ((data.c - data.o) / data.o) * 100;
+  };
+
   return (
     <Card className="glass-card p-6">
       <div className="flex items-center justify-between mb-6">
@@ -9,30 +34,30 @@ const MarketOverview = () => {
         <ChartLineIcon className="text-muted-foreground" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">S&P 500</p>
-          <p className="text-2xl font-bold">4,783.45</p>
-          <div className="flex items-center text-success">
-            <TrendingUpIcon className="w-4 h-4 mr-1" />
-            <span className="text-sm">+1.23%</span>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">NASDAQ</p>
-          <p className="text-2xl font-bold">15,123.45</p>
-          <div className="flex items-center text-success">
-            <TrendingUpIcon className="w-4 h-4 mr-1" />
-            <span className="text-sm">+0.89%</span>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">DOW JONES</p>
-          <p className="text-2xl font-bold">37,654.32</p>
-          <div className="flex items-center text-error">
-            <TrendingDownIcon className="w-4 h-4 mr-1" />
-            <span className="text-sm">-0.45%</span>
-          </div>
-        </div>
+        {Object.entries(indices).map(([symbol, name]) => {
+          const changePercent = getChangePercent(symbol);
+          const isPositive = changePercent >= 0;
+
+          return (
+            <div key={symbol} className="space-y-2">
+              <p className="text-sm text-muted-foreground">{name}</p>
+              <p className="text-2xl font-bold">
+                ${prices?.[symbol]?.c.toFixed(2) || "0.00"}
+              </p>
+              <div className={`flex items-center ${isPositive ? 'text-success' : 'text-error'}`}>
+                {isPositive ? (
+                  <TrendingUpIcon className="w-4 h-4 mr-1" />
+                ) : (
+                  <TrendingDownIcon className="w-4 h-4 mr-1" />
+                )}
+                <span className="text-sm">
+                  {isPositive ? "+" : ""}
+                  {changePercent.toFixed(2)}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );
