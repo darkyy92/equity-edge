@@ -95,7 +95,7 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
         const messages = [
           {
             role: 'system',
-            content: 'You are a financial analyst. Provide a brief analysis of the stock based on the provided data. Include investment strategy, technical analysis, market analysis, and risk factors.',
+            content: 'You are a financial analyst. Provide a concise analysis of the stock using markdown formatting. Keep each section to 2-3 sentences maximum. Use bold for key terms and numbers.',
           },
           {
             role: 'user',
@@ -106,11 +106,12 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
         const data = await makeOpenAIRequest(messages);
         const analysis = data.choices[0].message.content;
 
+        // Convert markdown to HTML
         const sections: AIAnalysisResponse = {
-          strategy: extractSection(analysis, "Investment Strategy"),
-          technical: extractSection(analysis, "Technical Analysis"),
-          market: extractSection(analysis, "Market Analysis"),
-          risks: extractSection(analysis, "Risk Factors"),
+          strategy: markdownToHTML(extractSection(analysis, "Investment Strategy")),
+          technical: markdownToHTML(extractSection(analysis, "Technical Analysis")),
+          market: markdownToHTML(extractSection(analysis, "Market Analysis")),
+          risks: markdownToHTML(extractSection(analysis, "Risk Factors")),
         };
 
         resolve(sections);
@@ -125,8 +126,62 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
   });
 };
 
+const markdownToHTML = (text: string): string => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>')
+    .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+    .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+    .replace(/# (.*?)\n/g, '<h1>$1</h1>');
+};
+
+// Helper to extract item config from a payload.
+function getPayloadConfigFromPayload(
+  config: ChartConfig,
+  payload: unknown,
+  key: string
+) {
+  if (typeof payload !== "object" || payload === null) {
+    return undefined;
+  }
+
+  const payloadPayload =
+    "payload" in payload &&
+    typeof payload.payload === "object" &&
+    payload.payload !== null
+      ? payload.payload
+      : undefined;
+
+  let configLabelKey: string = key;
+
+  if (
+    key in payload &&
+    typeof payload[key as keyof typeof payload] === "string"
+  ) {
+    configLabelKey = payload[key as keyof typeof payload] as string;
+  } else if (
+    payloadPayload &&
+    key in payloadPayload &&
+    typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
+  ) {
+    configLabelKey = payloadPayload[
+      key as keyof typeof payloadPayload
+    ] as string;
+  }
+
+  return configLabelKey in config
+    ? config[configLabelKey]
+    : config[key as keyof typeof config];
+}
+
 const extractSection = (text: string, section: string): string => {
   const regex = new RegExp(`${section}:?([^]*?)(?=(?:Investment Strategy|Technical Analysis|Market Analysis|Risk Factors):|$)`, 'i');
   const match = text.match(regex);
   return match ? match[1].trim() : `${section} information not available.`;
+};
+
+export {
+  getAIAnalysis,
+  extractSection,
 };

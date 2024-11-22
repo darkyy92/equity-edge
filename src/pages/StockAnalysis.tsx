@@ -1,23 +1,27 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getDailyPrices } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import LastUpdated from "@/components/LastUpdated";
 import { getAIAnalysis, type AIAnalysisResponse } from "@/lib/openai";
+import { cn } from "@/lib/utils";
+
+type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
 
 const StockAnalysis = () => {
   const { symbol } = useParams();
+  const [timeRange, setTimeRange] = useState<TimeRange>("1W");
 
   const { data: priceData, dataUpdatedAt } = useQuery({
-    queryKey: ['stockPrice', symbol],
-    queryFn: () => getDailyPrices(symbol || ''),
+    queryKey: ['stockPrice', symbol, timeRange],
+    queryFn: () => getDailyPrices(symbol || '', timeRange),
     enabled: !!symbol,
     refetchInterval: 60000,
-    staleTime: 60000,
-    gcTime: 300000,
   });
 
   const { data: aiAnalysis } = useQuery<AIAnalysisResponse | null>({
@@ -25,8 +29,6 @@ const StockAnalysis = () => {
     queryFn: () => getAIAnalysis(symbol || '', priceData),
     enabled: !!symbol && !!priceData,
     refetchInterval: 300000,
-    staleTime: 300000,
-    gcTime: 300000,
   });
 
   if (!symbol) return <div>Invalid stock symbol</div>;
@@ -34,6 +36,8 @@ const StockAnalysis = () => {
   const change = priceData ? priceData.c - priceData.o : 0;
   const changePercent = priceData ? (change / priceData.o) * 100 : 0;
   const isPositive = change >= 0;
+
+  const timeRanges: TimeRange[] = ["1D", "1W", "1M", "3M", "1Y", "5Y"];
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6">
@@ -59,19 +63,51 @@ const StockAnalysis = () => {
         </div>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Price Chart</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Price Chart</h2>
+            <div className="flex gap-2">
+              {timeRanges.map((range) => (
+                <Button
+                  key={range}
+                  variant={timeRange === range ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(range)}
+                >
+                  {range}
+                </Button>
+              ))}
+            </div>
+          </div>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={priceData?.chartData || []}>
-                <XAxis dataKey="timestamp" />
-                <YAxis domain={['auto', 'auto']} />
-                <Tooltip />
+                <XAxis 
+                  dataKey="timestamp"
+                  stroke="#888888"
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke="#888888"
+                  fontSize={12}
+                  domain={['auto', 'auto']}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(17, 17, 17, 0.95)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  }}
+                  itemStyle={{ color: '#ffffff' }}
+                  labelStyle={{ color: '#888888' }}
+                />
                 <Line 
                   type="monotone" 
                   dataKey="price" 
                   stroke="#8884d8"
-                  dot={false}
                   strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#8884d8' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -79,7 +115,7 @@ const StockAnalysis = () => {
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6">
+          <Card className="p-6 h-fit">
             <h2 className="text-xl font-semibold mb-4">Key Metrics</h2>
             <div className="space-y-4">
               <div className="flex justify-between">
@@ -106,23 +142,11 @@ const StockAnalysis = () => {
             <div className="space-y-4">
               <Badge variant="outline" className="mb-2">AI Generated</Badge>
               {aiAnalysis ? (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-semibold mb-2">Investment Strategy</h3>
-                    <p className="text-muted-foreground">{aiAnalysis.strategy}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Technical Analysis</h3>
-                    <p className="text-muted-foreground">{aiAnalysis.technical}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Market Analysis</h3>
-                    <p className="text-muted-foreground">{aiAnalysis.market}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Risk Factors</h3>
-                    <p className="text-muted-foreground">{aiAnalysis.risks}</p>
-                  </div>
+                <div className="space-y-6 prose dark:prose-invert max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: aiAnalysis.strategy }} />
+                  <div dangerouslySetInnerHTML={{ __html: aiAnalysis.technical }} />
+                  <div dangerouslySetInnerHTML={{ __html: aiAnalysis.market }} />
+                  <div dangerouslySetInnerHTML={{ __html: aiAnalysis.risks }} />
                 </div>
               ) : (
                 <p className="text-muted-foreground">Generating analysis...</p>

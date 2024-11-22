@@ -69,13 +69,39 @@ export const getTopStocks = async (): Promise<StockTicker[]> => {
   }
 };
 
-export const getDailyPrices = async (symbol: string): Promise<any> => {
+export const getDailyPrices = async (symbol: string, timeRange: string = "1W"): Promise<any> => {
   try {
     const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    let startDate: string;
+    
+    switch(timeRange) {
+      case "1D":
+        startDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case "1W":
+        startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case "1M":
+        startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case "3M":
+        startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case "1Y":
+        startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case "5Y":
+        startDate = new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      default:
+        startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    }
+    
+    const multiplier = timeRange === "1D" ? 5 : 1;
+    const timespan = timeRange === "1D" ? "minute" : "day";
     
     const response = await fetch(
-      `${BASE_URL}/v2/aggs/ticker/${symbol}/range/1/hour/${startDate}/${endDate}?adjusted=true&sort=asc&limit=168&apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v2/aggs/ticker/${symbol}/range/${multiplier}/${timespan}/${startDate}/${endDate}?adjusted=true&sort=asc&apiKey=${POLYGON_API_KEY}`
     );
     
     if (!response.ok) throw new Error('Failed to fetch daily prices');
@@ -83,13 +109,13 @@ export const getDailyPrices = async (symbol: string): Promise<any> => {
     
     if (!data.results) throw new Error('No results found');
 
-    // Transform the data for the chart
     const chartData = data.results.map((item: any) => ({
-      timestamp: new Date(item.t).toLocaleString(),
+      timestamp: timeRange === "1D" 
+        ? new Date(item.t).toLocaleTimeString()
+        : new Date(item.t).toLocaleDateString(),
       price: item.c,
     }));
 
-    // Return both the latest price data and the chart data
     return {
       ...data.results[data.results.length - 1],
       chartData,
