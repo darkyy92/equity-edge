@@ -54,7 +54,7 @@ export const getMarketStatus = async (): Promise<MarketStatus> => {
 export const getTopStocks = async (): Promise<StockTicker[]> => {
   try {
     const response = await fetch(
-      `${BASE_URL}/v3/reference/tickers?market=stocks&active=true&sort=market_value&order=desc&limit=3&apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v3/reference/tickers?market=stocks&active=true&sort=market_cap_usd&order=desc&limit=3&apiKey=${POLYGON_API_KEY}`
     );
     if (!response.ok) throw new Error('Failed to fetch top stocks');
     const data = await response.json();
