@@ -22,8 +22,7 @@ const processQueue = async () => {
     if (request) {
       try {
         await request();
-        // Wait 1 second between requests to respect rate limits
-        await wait(1000);
+        await wait(2000); // Increased wait time between requests
       } catch (error) {
         console.error('Error processing queued request:', error);
       }
@@ -32,10 +31,17 @@ const processQueue = async () => {
   isProcessingQueue = false;
 };
 
+const getFallbackAnalysis = (symbol: string): AIAnalysisResponse => ({
+  strategy: "AI analysis temporarily unavailable. Please try again later.",
+  technical: "Technical analysis unavailable due to API limitations.",
+  market: "Market analysis unavailable due to API limitations.",
+  risks: "Risk analysis unavailable due to API limitations."
+});
+
 const makeOpenAIRequest = async (messages: any[]) => {
   const maxRetries = 3;
   let retryCount = 0;
-  let baseDelay = 1000; // 1 second
+  let baseDelay = 2000; // Increased base delay
 
   while (retryCount < maxRetries) {
     try {
@@ -49,7 +55,7 @@ const makeOpenAIRequest = async (messages: any[]) => {
           model: 'gpt-4o-mini',
           messages,
           temperature: 0.7,
-          max_tokens: 500, // Reduced to help with quota limits
+          max_tokens: 300, // Further reduced tokens
         }),
       });
 
@@ -78,49 +84,45 @@ const makeOpenAIRequest = async (messages: any[]) => {
       await wait(baseDelay * Math.pow(2, retryCount));
     }
   }
+  
+  throw new Error('Max retries exceeded');
 };
 
-export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIAnalysisResponse | null> => {
-  try {
-    return new Promise((resolve, reject) => {
-      const request = async () => {
-        try {
-          const messages = [
-            {
-              role: 'system',
-              content: 'You are a financial analyst. Provide a brief analysis of the stock based on the provided data. Include investment strategy, technical analysis, market analysis, and risk factors.',
-            },
-            {
-              role: 'user',
-              content: `Analyze this stock data for ${symbol}: ${JSON.stringify(stockData)}`,
-            },
-          ];
+export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIAnalysisResponse> => {
+  return new Promise((resolve) => {
+    const request = async () => {
+      try {
+        const messages = [
+          {
+            role: 'system',
+            content: 'You are a financial analyst. Provide a brief analysis of the stock based on the provided data. Include investment strategy, technical analysis, market analysis, and risk factors.',
+          },
+          {
+            role: 'user',
+            content: `Analyze this stock data for ${symbol}: ${JSON.stringify(stockData)}`,
+          },
+        ];
 
-          const data = await makeOpenAIRequest(messages);
-          const analysis = data.choices[0].message.content;
+        const data = await makeOpenAIRequest(messages);
+        const analysis = data.choices[0].message.content;
 
-          // Parse the analysis into sections
-          const sections: AIAnalysisResponse = {
-            strategy: extractSection(analysis, "Investment Strategy"),
-            technical: extractSection(analysis, "Technical Analysis"),
-            market: extractSection(analysis, "Market Analysis"),
-            risks: extractSection(analysis, "Risk Factors"),
-          };
+        const sections: AIAnalysisResponse = {
+          strategy: extractSection(analysis, "Investment Strategy"),
+          technical: extractSection(analysis, "Technical Analysis"),
+          market: extractSection(analysis, "Market Analysis"),
+          risks: extractSection(analysis, "Risk Factors"),
+        };
 
-          resolve(sections);
-        } catch (error) {
-          console.error('Error getting AI analysis:', error);
-          reject(error);
-        }
-      };
+        resolve(sections);
+      } catch (error) {
+        console.error('Error getting AI analysis:', error);
+        resolve(getFallbackAnalysis(symbol));
+      }
+    };
 
-      requestQueue.push(request);
-      processQueue();
-    });
-  } catch (error) {
-    console.error('Error getting AI analysis:', error);
-    return null;
-  }
+    requestQueue.push(request);
+    processQueue();
+  });
 };
 
 const extractSection = (text: string, section: string): string => {
