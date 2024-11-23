@@ -180,7 +180,7 @@ const RecommendationCard = ({
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Estimated growth potential for {timeframe} term</p>
+                  <p>Estimated growth potential for {getTimeframeText(timeframe)} term</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

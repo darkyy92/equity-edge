@@ -1,0 +1,4 @@
+project_id = "vvfixcjsxkshtgmmygsi"
+
+[get-stock-recommendations]
+verify_jwt = false

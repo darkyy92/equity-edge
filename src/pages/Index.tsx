@@ -7,20 +7,52 @@ import { TrendingUpIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
-import { getTopStocks } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { StockTicker } from "@/lib/types";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
 
-  const { data: stockData, isLoading: isLoadingStocks, error } = useQuery({
-    queryKey: ['stockData', activeTab],
-    queryFn: () => getTopStocks(activeTab.split('-')[0] as 'short' | 'medium' | 'long'),
-    staleTime: 15 * 60 * 1000,
-    refetchInterval: 15 * 60 * 1000,
+  const { data: recommendations, isLoading, error } = useQuery({
+    queryKey: ['recommendations', activeTab],
+    queryFn: async () => {
+      try {
+        const timeframe = activeTab.split('-')[0] as 'short' | 'medium' | 'long';
+        
+        // First try to get cached recommendations from Supabase
+        const { data: cachedRecommendations, error: dbError } = await supabase
+          .from('stock_recommendations')
+          .select('*')
+          .eq('strategy_type', timeframe)
+          .order('updated_at', { ascending: false })
+          .limit(9);
+
+        if (dbError) throw dbError;
+
+        // If we have recent recommendations (less than 1 hour old), use them
+        if (cachedRecommendations && cachedRecommendations.length > 0) {
+          const mostRecent = new Date(cachedRecommendations[0].updated_at);
+          if (Date.now() - mostRecent.getTime() < 60 * 60 * 1000) {
+            return cachedRecommendations;
+          }
+        }
+
+        // Otherwise, get fresh recommendations from the edge function
+        const response = await supabase.functions.invoke('get-stock-recommendations', {
+          body: { timeframe }
+        });
+
+        if (response.error) throw response.error;
+        return response.data.recommendations;
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        throw error;
+      }
+    },
+    staleTime: 15 * 60 * 1000, // Consider data stale after 15 minutes
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
   });
 
   if (error) {
@@ -29,22 +61,6 @@ const Index = () => {
       description: "Unable to fetch stock recommendations. Please try again later.",
       variant: "destructive",
     });
-  }
-
-  if (isLoadingStocks) {
-    return (
-      <div className="min-h-screen bg-background p-6 space-y-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <SearchBar />
-          <MarketOverview />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <StockCardSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
   }
 
   const getTimeframeDescription = (timeframe: TimeFrame) => {
@@ -81,27 +97,35 @@ const Index = () => {
                   {getTimeframeDescription(term as TimeFrame)}
                 </p>
 
-                {stockData && stockData.length > 0 ? (
+                {isLoading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {stockData.map((stock) => (
+                    {[1, 2, 3].map((i) => (
+                      <StockCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : recommendations && recommendations.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {recommendations.map((stock: any) => (
                       <RecommendationCard
-                        key={stock.ticker}
-                        symbol={stock.ticker}
-                        name={stock.name}
-                        recommendation={stock.aiRecommendation?.potentialGrowth >= 0 ? "Buy" : "Sell"}
-                        confidence={stock.aiRecommendation?.confidence ?? 75}
-                        reason={stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
+                        key={stock.symbol}
+                        symbol={stock.symbol}
+                        name={stock.name || stock.symbol}
+                        recommendation={stock.potentialGrowth >= 0 ? "Buy" : "Sell"}
+                        confidence={stock.confidence_metrics?.confidence ?? 75}
+                        reason={stock.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
                         price={stock.price ?? 0}
                         change={stock.change ?? 0}
                         changePercent={stock.changePercent ?? 0}
                         volume={stock.volume ?? 0}
                         vwap={stock.vwap ?? 0}
-                        growthPotential={stock.aiRecommendation?.potentialGrowth ?? 0}
+                        growthPotential={stock[`${term.split('-')[0]}_term_analysis`]?.potentialGrowth ?? 0}
                         timeframe={term.split('-')[0]}
-                        fundamentalMetrics={stock.fundamentalMetrics}
-                        technicalSignals={stock.technicalSignals}
-                        marketContext={stock.marketContext}
-                        primaryDrivers={stock.primaryDrivers || []}
+                        isin={stock.isin}
+                        valorNumber={stock.valor_number}
+                        fundamentalMetrics={stock.fundamental_metrics}
+                        technicalSignals={stock.technical_signals}
+                        marketContext={stock.market_context}
+                        primaryDrivers={stock.primary_drivers || []}
                       />
                     ))}
                   </div>
