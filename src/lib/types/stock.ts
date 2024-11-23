@@ -32,7 +32,7 @@ export interface AIRecommendation {
   timeframe: 'short' | 'medium' | 'long';
   potentialGrowth: number;
   confidence: number;
-  explanation?: string;
+  explanation: string;
   fundamentalMetrics?: FundamentalMetrics;
   technicalSignals?: TechnicalSignals;
   marketContext?: MarketContext;
@@ -57,6 +57,8 @@ export interface StockTicker {
   changePercent?: number;
   volume?: number;
   vwap?: number;
+  isin?: string;
+  valor_number?: string;
   fundamentalMetrics?: FundamentalMetrics;
   technicalSignals?: TechnicalSignals;
   marketContext?: MarketContext;

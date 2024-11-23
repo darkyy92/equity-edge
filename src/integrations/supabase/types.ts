@@ -74,6 +74,7 @@ export type Database = {
           fundamental_metrics: Json | null
           hold_sell_recommendation: string | null
           id: string
+          isin: string | null
           long_term_analysis: Json | null
           market_context: Json | null
           medium_term_analysis: Json | null
@@ -81,9 +82,11 @@ export type Database = {
           primary_drivers: string[] | null
           recommendation_strength: string | null
           short_term_analysis: Json | null
+          strategy_type: string | null
           symbol: string
           technical_signals: Json | null
           updated_at: string
+          valor_number: string | null
         }
         Insert: {
           confidence_metrics?: Json | null
@@ -93,6 +96,7 @@ export type Database = {
           fundamental_metrics?: Json | null
           hold_sell_recommendation?: string | null
           id?: string
+          isin?: string | null
           long_term_analysis?: Json | null
           market_context?: Json | null
           medium_term_analysis?: Json | null
@@ -100,9 +104,11 @@ export type Database = {
           primary_drivers?: string[] | null
           recommendation_strength?: string | null
           short_term_analysis?: Json | null
+          strategy_type?: string | null
           symbol: string
           technical_signals?: Json | null
           updated_at?: string
+          valor_number?: string | null
         }
         Update: {
           confidence_metrics?: Json | null
@@ -112,6 +118,7 @@ export type Database = {
           fundamental_metrics?: Json | null
           hold_sell_recommendation?: string | null
           id?: string
+          isin?: string | null
           long_term_analysis?: Json | null
           market_context?: Json | null
           medium_term_analysis?: Json | null
@@ -119,9 +126,11 @@ export type Database = {
           primary_drivers?: string[] | null
           recommendation_strength?: string | null
           short_term_analysis?: Json | null
+          strategy_type?: string | null
           symbol?: string
           technical_signals?: Json | null
           updated_at?: string
+          valor_number?: string | null
         }
         Relationships: []
       }

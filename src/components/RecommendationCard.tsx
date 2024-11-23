@@ -5,7 +5,8 @@ import {
   BarChart3Icon, 
   NewspaperIcon,
   BuildingIcon,
-  AlertCircleIcon
+  AlertCircleIcon,
+  InfoIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -23,6 +24,8 @@ interface RecommendationCardProps {
   vwap: number;
   growthPotential: number;
   timeframe: string;
+  isin?: string;
+  valorNumber?: string;
   fundamentalMetrics?: {
     roe?: number;
     profitMargin?: number;
@@ -53,6 +56,8 @@ const RecommendationCard = ({
   vwap,
   growthPotential,
   timeframe,
+  isin,
+  valorNumber,
   fundamentalMetrics,
   technicalSignals,
   marketContext,
@@ -96,6 +101,16 @@ const RecommendationCard = ({
             </div>
             <h3 className="text-lg font-semibold">{name}</h3>
             <p className="text-sm text-muted-foreground">{symbol}</p>
+            {(isin || valorNumber) && (
+              <div className="flex items-center gap-2 mt-1">
+                <InfoIcon className="w-4 h-4 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  {isin && `ISIN: ${isin}`}
+                  {isin && valorNumber && " | "}
+                  {valorNumber && `Valor: ${valorNumber}`}
+                </p>
+              </div>
+            )}
           </div>
           <TrendingUpIcon className="text-muted-foreground" />
         </div>
@@ -165,7 +180,7 @@ const RecommendationCard = ({
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Estimated growth based on current analysis</p>
+                  <p>Estimated growth potential for {timeframe} term</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
