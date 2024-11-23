@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { HomeIcon, LineChartIcon } from "lucide-react";
+import { LineChartIcon } from "lucide-react";
 
 const Navigation = () => {
   const location = useLocation();
@@ -11,8 +11,8 @@ const Navigation = () => {
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link to="/" className="flex items-center space-x-2">
-            <LineChartIcon className="h-6 w-6" />
-            <span className="font-bold">Market Pulse</span>
+            <img src="/lovable-uploads/c61bb094-f3cc-417b-8cbe-ccb9ad907c73.png" alt="Equity Edge Logo" className="h-8 w-8" />
+            <span className="font-bold">Equity Edge</span>
           </Link>
         </div>
         <div className="flex items-center space-x-4 text-sm">
@@ -20,7 +20,6 @@ const Navigation = () => {
             to="/" 
             className={`flex items-center space-x-2 ${!isStockPage ? 'text-foreground' : 'text-muted-foreground'}`}
           >
-            <HomeIcon className="h-4 w-4" />
             <span>Home</span>
           </Link>
           {isStockPage && (

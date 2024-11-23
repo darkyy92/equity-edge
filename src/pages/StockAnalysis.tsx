@@ -6,10 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import LastUpdated from "@/components/LastUpdated";
 import { getAIAnalysis, type AIAnalysisResponse } from "@/lib/openai";
 import { cn } from "@/lib/utils";
+import AdvancedAnalysis from "@/components/AdvancedAnalysis";
 
 type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
 
@@ -122,6 +123,11 @@ const StockAnalysis = () => {
             </ResponsiveContainer>
           </div>
         </Card>
+
+        <AdvancedAnalysis 
+          symbol={symbol || ''} 
+          historicalData={priceData?.chartData || []}
+        />
 
         <Card className={cn(
           "p-6 relative overflow-hidden",
