@@ -20,55 +20,54 @@ const Index = () => {
     queryFn: getTopStocks,
     staleTime: 15 * 60 * 1000, // Consider data fresh for 15 minutes
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
-  });
+    onSuccess: async (data) => {
+      if (!data?.length) return;
 
-  // Cache data in Supabase when we get new stock data
-  const cacheStockData = async (stocks: any[]) => {
-    if (!stocks?.length) return;
+      try {
+        const recommendations = data.map(stock => ({
+          symbol: stock.ticker,
+          short_term_analysis: {
+            potentialGrowth: stock.changePercent || 0,
+            confidence: 75,
+            timeframe: "short",
+          },
+          medium_term_analysis: {
+            potentialGrowth: stock.changePercent || 0,
+            confidence: 70,
+            timeframe: "medium",
+          },
+          long_term_analysis: {
+            potentialGrowth: stock.changePercent || 0,
+            confidence: 65,
+            timeframe: "long",
+          },
+          explanation: `Based on ${stock.name}'s recent performance and market trends`,
+        }));
 
-    const recommendations = stocks.map(stock => ({
-      symbol: stock.ticker,
-      short_term_analysis: {
-        potentialGrowth: stock.changePercent || 0,
-        confidence: 75,
-        timeframe: "short",
-      },
-      medium_term_analysis: {
-        potentialGrowth: stock.changePercent || 0,
-        confidence: 70,
-        timeframe: "medium",
-      },
-      long_term_analysis: {
-        potentialGrowth: stock.changePercent || 0,
-        confidence: 65,
-        timeframe: "long",
-      },
-      explanation: `Based on ${stock.name}'s recent performance and market trends`,
-    }));
+        const { error } = await supabase
+          .from('stock_recommendations')
+          .upsert(recommendations, {
+            onConflict: 'symbol',
+          });
 
-    try {
-      const { error } = await supabase
-        .from('stock_recommendations')
-        .upsert(recommendations, {
-          onConflict: 'symbol',
-          ignoreDuplicates: false
+        if (error) {
+          console.error('Error caching stock data:', error);
+          toast({
+            title: "Warning",
+            description: "Could not cache stock data, but live data is still available",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error in data processing:', error);
+        toast({
+          title: "Error",
+          description: "Failed to process stock data",
+          variant: "destructive",
         });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error caching stock data:', error);
-      toast({
-        title: "Warning",
-        description: "Could not cache stock data, but live data is still available",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Cache stock data whenever we get new data
-  if (stockData && !isLoadingStocks) {
-    cacheStockData(stockData);
-  }
+      }
+    },
+  });
 
   const getAnalysisForTerm = (stock: any, term: string) => {
     // For live data from Polygon.io
