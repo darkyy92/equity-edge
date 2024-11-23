@@ -45,18 +45,30 @@ export const fetchStockData = async (symbol: string): Promise<any> => {
   }
 };
 
-export const fetchTopStocks = async (): Promise<any[]> => {
+export const fetchTopStocks = async (type: 'gainers' | 'most-active' | 'market-cap'): Promise<any[]> => {
   try {
+    const endpoint = type === 'gainers' 
+      ? 'gainers'
+      : type === 'most-active'
+        ? 'most-active'
+        : 'tickers';
+        
+    const params = type === 'market-cap'
+      ? '?market=stocks&active=true&sort=market_cap&order=desc&limit=10'
+      : '?timespan=day&limit=10';
+      
     const response = await fetchWithCORS(
-      `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/gainers?timespan=day&limit=10&apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/${endpoint}${params}&apiKey=${POLYGON_API_KEY}`
     );
     
     if (!response.ok) throw new Error('Failed to fetch top stocks');
     const data = await response.json();
     
-    return Promise.all(data.tickers.map(async (ticker: any) => {
-      return await fetchStockData(ticker.ticker);
-    }));
+    return Promise.all(
+      (data.tickers || data.results || []).slice(0, 10).map(async (ticker: any) => {
+        return await fetchStockData(ticker.ticker || ticker.symbol);
+      })
+    );
   } catch (error) {
     toast({
       title: "Error fetching top stocks",

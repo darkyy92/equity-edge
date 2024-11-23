@@ -4,7 +4,14 @@ import { StockTicker } from '../types';
 
 export const getTopStocks = async (timeframe: 'short' | 'medium' | 'long'): Promise<StockTicker[]> => {
   try {
-    const stocks = await fetchTopStocks();
+    // Fetch top gainers for short-term, highest volume for medium-term, and largest market cap for long-term
+    const endpoint = timeframe === 'short' 
+      ? 'gainers'
+      : timeframe === 'medium' 
+        ? 'most-active' 
+        : 'market-cap';
+        
+    const stocks = await fetchTopStocks(endpoint);
     
     // Process stocks based on timeframe strategy
     const processedStocks = await Promise.all(
