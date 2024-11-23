@@ -1,16 +1,14 @@
 import { useState } from "react";
 import MarketOverview from "@/components/MarketOverview";
-import { getTopStocks, getRecommendedStocks } from "@/lib/api";
-import { StockTicker } from "@/lib/types";
 import SearchBar from "@/components/SearchBar";
-import { getAIAnalysis } from "@/lib/openai";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, ChevronRightIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import StockCardSkeleton from "@/components/StockCardSkeleton";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("short-term");
@@ -21,27 +19,13 @@ const Index = () => {
       const { data, error } = await supabase
         .from('stock_recommendations')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6);
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data;
     },
-    refetchInterval: 300000,
+    refetchInterval: 300000, // Refresh every 5 minutes
   });
-
-  const getRecommendationType = (rec: any): "Buy" | "Sell" | "Hold" => {
-    if (!rec.hold_sell_recommendation) return "Hold";
-    const recommendation = rec.hold_sell_recommendation.toLowerCase();
-    if (recommendation.includes('buy')) return "Buy";
-    if (recommendation.includes('sell')) return "Sell";
-    return "Hold";
-  };
-
-  const getConfidence = (analysis: any): number => {
-    if (!analysis) return 70;
-    return analysis.confidence || 70;
-  };
 
   const getAnalysisForTerm = (stock: any, term: string) => {
     switch (term) {
@@ -56,62 +40,55 @@ const Index = () => {
     }
   };
 
-  const getPredictedPerformance = (stock: any, term: string) => {
-    const analysis = getAnalysisForTerm(stock, term);
-    return analysis?.potentialGrowth || 0;
-  };
-
   const RecommendationCard = ({ stock, term }: { stock: any; term: string }) => {
-    const performance = getPredictedPerformance(stock, term);
+    const analysis = getAnalysisForTerm(stock, term);
+    const performance = analysis?.potentialGrowth || 0;
     const isPositive = performance >= 0;
-    const confidence = getConfidence(getAnalysisForTerm(stock, term));
-    const recommendation = getRecommendationType(stock);
+    const confidence = analysis?.confidence || 70;
 
     return (
-      <Card className="glass-card p-6 hover-scale transition-all duration-200 animate-fade-in">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <div className="flex items-center space-x-2 mb-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                recommendation === "Buy" ? "bg-success/10 text-success" :
-                recommendation === "Sell" ? "bg-error/10 text-error" :
-                "bg-muted text-muted-foreground"
-              }`}>
-                {recommendation}
-              </span>
-              <span className="text-sm text-muted-foreground">{confidence}% Confidence</span>
-            </div>
-            <h3 className="text-lg font-semibold">{stock.symbol}</h3>
-          </div>
-          {isPositive ? (
-            <ArrowUpIcon className="text-success" />
-          ) : (
-            <ArrowDownIcon className="text-error" />
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+      <Link to={`/stock/${stock.symbol}`} className="block">
+        <Card className="glass-card p-6 hover-scale transition-all duration-200 animate-fade-in">
+          <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-sm text-muted-foreground">Predicted Performance</p>
-              <p className={`text-lg font-semibold ${isPositive ? 'text-success' : 'text-error'}`}>
-                {isPositive ? '+' : ''}{performance.toFixed(2)}%
-              </p>
+              <div className="flex items-center space-x-2 mb-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  isPositive ? "bg-success/10 text-success" : "bg-error/10 text-error"
+                }`}>
+                  {isPositive ? 'Buy' : 'Sell'}
+                </span>
+                <span className="text-sm text-muted-foreground">{confidence}% Confidence</span>
+              </div>
+              <h3 className="text-lg font-semibold">{stock.symbol}</h3>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Strategy</p>
-              <p className="text-lg font-semibold capitalize">{term.replace('-', ' ')}</p>
-            </div>
+            {isPositive ? (
+              <ArrowUpIcon className="text-success" />
+            ) : (
+              <ArrowDownIcon className="text-error" />
+            )}
           </div>
 
-          <Link to={`/stock/${stock.symbol}`}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Predicted Performance</p>
+                <p className={`text-lg font-semibold ${isPositive ? 'text-success' : 'text-error'}`}>
+                  {isPositive ? '+' : ''}{performance.toFixed(2)}%
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Strategy</p>
+                <p className="text-lg font-semibold capitalize">{term.replace('-', ' ')}</p>
+              </div>
+            </div>
+
             <Button className="w-full group" variant="outline">
               View Analysis
               <ChevronRightIcon className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
-          </Link>
-        </div>
-      </Card>
+          </div>
+        </Card>
+      </Link>
     );
   };
 
@@ -145,16 +122,16 @@ const Index = () => {
                 {isLoading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[1, 2, 3].map((i) => (
-                      <Card key={i} className="glass-card p-6 animate-pulse">
-                        <div className="h-32 bg-muted rounded-lg"></div>
-                      </Card>
+                      <StockCardSkeleton key={i} />
                     ))}
                   </div>
                 ) : recommendations && recommendations.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recommendations.map((stock) => (
-                      <RecommendationCard key={stock.id} stock={stock} term={term} />
-                    ))}
+                    {recommendations
+                      .filter(stock => getAnalysisForTerm(stock, term))
+                      .map((stock) => (
+                        <RecommendationCard key={stock.id} stock={stock} term={term} />
+                      ))}
                   </div>
                 ) : (
                   <Card className="p-8 text-center">
