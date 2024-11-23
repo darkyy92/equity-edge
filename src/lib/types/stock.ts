@@ -41,6 +41,7 @@ export interface AIRecommendation {
 
 export interface StockTicker {
   ticker: string;
+  symbol?: string; // Added for compatibility with database
   name: string;
   market: string;
   locale: string;

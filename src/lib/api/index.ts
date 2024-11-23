@@ -9,12 +9,12 @@ export const getTopStocks = async (timeframe: 'short' | 'medium' | 'long'): Prom
     if (!recommendations.length) return [];
 
     // Enrich with Polygon data
-    const symbols = recommendations.map(rec => rec.symbol);
+    const symbols = recommendations.map(rec => rec.ticker);
     const enrichedData = await enrichStockData(symbols);
 
     // Combine AI recommendations with market data
     return recommendations.map(rec => {
-      const marketData = enrichedData.find(data => data.ticker === rec.symbol);
+      const marketData = enrichedData.find(data => data.ticker === rec.ticker);
       return {
         ...rec,
         ...marketData
