@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import MarketOverview from "@/components/MarketOverview";
 import StockCard from "@/components/StockCard";
 import RecommendationCard from "@/components/RecommendationCard";
@@ -62,7 +62,7 @@ const Index = () => {
         <MarketOverview />
 
         <div className="space-y-4">
-          <Tabs defaultValue="short-term" className="w-full">
+          <Tabs defaultValue="short-term" className="w-full" onValueChange={setActiveTab}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold">Investment Recommendations</h2>
               <TabsList>
@@ -81,7 +81,7 @@ const Index = () => {
                     symbol={stock.symbol}
                     name={stock.symbol}
                     recommendation={getRecommendationType(stock)}
-                    confidence={getConfidence(stock.short_term_analysis)}
+                    confidence={getConfidence(getAnalysisForTerm(stock, 'short-term'))}
                     reason={stock.explanation || "Analysis not available"}
                     price={0}
                     change={0}
@@ -102,7 +102,7 @@ const Index = () => {
                     symbol={stock.symbol}
                     name={stock.symbol}
                     recommendation={getRecommendationType(stock)}
-                    confidence={getConfidence(stock.medium_term_analysis)}
+                    confidence={getConfidence(getAnalysisForTerm(stock, 'medium-term'))}
                     reason={stock.explanation || "Analysis not available"}
                     price={0}
                     change={0}
@@ -123,7 +123,7 @@ const Index = () => {
                     symbol={stock.symbol}
                     name={stock.symbol}
                     recommendation={getRecommendationType(stock)}
-                    confidence={getConfidence(stock.long_term_analysis)}
+                    confidence={getConfidence(getAnalysisForTerm(stock, 'long-term'))}
                     reason={stock.explanation || "Analysis not available"}
                     price={0}
                     change={0}
