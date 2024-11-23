@@ -17,13 +17,15 @@ interface ComprehensiveAnalysisProps {
   symbol: string;
 }
 
+const POLYGON_API_KEY = 's3Kgk9rqPEj4IBl3Bo8Aiv7y53slSpSc';
+
 const ComprehensiveAnalysis = ({ symbol }: ComprehensiveAnalysisProps) => {
   const { data: details, isLoading: isLoadingDetails, error: detailsError, refetch: refetchDetails } = useQuery({
     queryKey: ["companyDetails", symbol],
     queryFn: async () => {
       try {
         const response = await fetch(
-          `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.POLYGON_API_KEY}`
+          `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${POLYGON_API_KEY}`
         );
         if (!response.ok) throw new Error('Failed to fetch company details');
         const data = await response.json();
@@ -42,7 +44,7 @@ const ComprehensiveAnalysis = ({ symbol }: ComprehensiveAnalysisProps) => {
     queryFn: async () => {
       try {
         const response = await fetch(
-          `https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?apiKey=${process.env.POLYGON_API_KEY}`
+          `https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?apiKey=${POLYGON_API_KEY}`
         );
         if (!response.ok) throw new Error('Failed to fetch aggregates');
         const data = await response.json();
