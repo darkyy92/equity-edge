@@ -3,14 +3,25 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface HoldSellIndicatorProps {
-  recommendation: 'hold' | 'sell' | 'review';
-  strength: 'green' | 'yellow' | 'red';
+  recommendation: string;
+  strength: string;
   explanation: string;
 }
 
+const isValidRecommendation = (value: string): value is 'hold' | 'sell' | 'review' => {
+  return ['hold', 'sell', 'review'].includes(value.toLowerCase());
+};
+
+const isValidStrength = (value: string): value is 'green' | 'yellow' | 'red' => {
+  return ['green', 'yellow', 'red'].includes(value.toLowerCase());
+};
+
 const HoldSellIndicator = ({ recommendation, strength, explanation }: HoldSellIndicatorProps) => {
+  const normalizedRecommendation = isValidRecommendation(recommendation) ? recommendation.toLowerCase() as 'hold' | 'sell' | 'review' : 'review';
+  const normalizedStrength = isValidStrength(strength) ? strength.toLowerCase() as 'green' | 'yellow' | 'red' : 'yellow';
+
   const getIndicatorColor = () => {
-    switch (strength) {
+    switch (normalizedStrength) {
       case 'green':
         return 'text-success bg-success/10';
       case 'yellow':
@@ -23,7 +34,7 @@ const HoldSellIndicator = ({ recommendation, strength, explanation }: HoldSellIn
   };
 
   const getIcon = () => {
-    switch (strength) {
+    switch (normalizedStrength) {
       case 'green':
         return <CheckCircle className="w-6 h-6 text-success" />;
       case 'yellow':
@@ -40,7 +51,7 @@ const HoldSellIndicator = ({ recommendation, strength, explanation }: HoldSellIn
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">Position Recommendation</h3>
         <Badge variant="outline" className={getIndicatorColor()}>
-          {recommendation.toUpperCase()}
+          {normalizedRecommendation.toUpperCase()}
         </Badge>
       </div>
 
