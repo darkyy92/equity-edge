@@ -1,7 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUpIcon, DollarSignIcon, BarChart3Icon, ClockIcon } from "lucide-react";
+import { 
+  TrendingUpIcon, 
+  BarChart3Icon, 
+  NewspaperIcon,
+  BuildingIcon,
+  AlertCircleIcon
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface RecommendationCardProps {
   symbol: string;
@@ -16,6 +23,21 @@ interface RecommendationCardProps {
   vwap: number;
   growthPotential: number;
   timeframe: string;
+  fundamentalMetrics?: {
+    roe?: number;
+    profitMargin?: number;
+    revenueGrowth?: number;
+  };
+  technicalSignals?: {
+    rsi?: number;
+    macd?: string;
+    movingAverages?: string;
+  };
+  marketContext?: {
+    sectorTrend?: string;
+    peerComparison?: string;
+  };
+  primaryDrivers?: string[];
 }
 
 const RecommendationCard = ({
@@ -31,6 +53,10 @@ const RecommendationCard = ({
   vwap,
   growthPotential,
   timeframe,
+  fundamentalMetrics,
+  technicalSignals,
+  marketContext,
+  primaryDrivers = [],
 }: RecommendationCardProps) => {
   const getBadgeColor = (rec: string) => {
     switch (rec) {
@@ -85,36 +111,60 @@ const RecommendationCard = ({
               {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
             </p>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Volume</p>
-            <p className="text-lg font-semibold">{formatNumber(volume)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">VWAP</p>
-            <p className="text-lg font-semibold">${vwap.toFixed(2)}</p>
+        </div>
+
+        {/* Key Drivers Section */}
+        <div className="mb-4">
+          <h4 className="text-sm font-medium mb-2">Key Drivers</h4>
+          <div className="flex flex-wrap gap-2">
+            {primaryDrivers.map((driver, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {driver}
+              </Badge>
+            ))}
           </div>
         </div>
 
-        <div className="border-t pt-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <TrendingUpIcon className="w-4 h-4 text-muted-foreground" />
+        {/* Analysis Summary */}
+        <div className="space-y-2 mb-4">
+          {fundamentalMetrics && (
+            <div className="flex items-center gap-2">
+              <BuildingIcon className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">
+                ROE: {fundamentalMetrics.roe}% | Margin: {fundamentalMetrics.profitMargin}%
+              </span>
+            </div>
+          )}
+          {technicalSignals && (
+            <div className="flex items-center gap-2">
+              <BarChart3Icon className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">
+                RSI: {technicalSignals.rsi} | {technicalSignals.movingAverages}
+              </span>
+            </div>
+          )}
+          {marketContext && (
+            <div className="flex items-center gap-2">
+              <NewspaperIcon className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">{marketContext.sectorTrend}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <AlertCircleIcon className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium">Growth Potential</span>
             </div>
-            <span className={`text-sm font-semibold ${growthPotential >= 0 ? 'text-success' : 'text-error'}`}>
-              {growthPotential >= 0 ? '+' : ''}{growthPotential}%
-            </span>
+            <Tooltip content="Estimated growth based on current analysis">
+              <span className={`text-sm font-semibold ${growthPotential >= 0 ? 'text-success' : 'text-error'}`}>
+                {growthPotential >= 0 ? '+' : ''}{growthPotential}%
+              </span>
+            </Tooltip>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <ClockIcon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Time Range</span>
-            </div>
-            <span className="text-sm">{getTimeframeText(timeframe)}</span>
-          </div>
+          <p className="text-sm text-muted-foreground">{reason}</p>
         </div>
-        
-        <p className="text-sm text-muted-foreground mt-4">{reason}</p>
       </Card>
     </Link>
   );

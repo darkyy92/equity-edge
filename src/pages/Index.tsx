@@ -47,6 +47,17 @@ const Index = () => {
     );
   }
 
+  const getTimeframeDescription = (timeframe: TimeFrame) => {
+    switch (timeframe) {
+      case 'short-term':
+        return 'Stocks predicted to rise sharply in the next 3 months based on technical signals and momentum';
+      case 'medium-term':
+        return 'Stable stocks with solid fundamentals and moderate growth potential over 6-12 months';
+      case 'long-term':
+        return 'Companies with robust fundamentals, competitive advantages, and sustainable growth strategies (1+ years)';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6 space-y-6 animate-fade-in">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -67,11 +78,7 @@ const Index = () => {
             {['short-term', 'medium-term', 'long-term'].map((term) => (
               <TabsContent key={term} value={term} className="space-y-4">
                 <p className="text-muted-foreground">
-                  {term === 'short-term' 
-                    ? 'Stocks predicted to rise sharply in the next 3 months'
-                    : term === 'medium-term'
-                    ? 'Stable stocks with moderate growth potential over 6-12 months'
-                    : 'Companies with robust fundamentals and long-term growth strategies (1+ years)'}
+                  {getTimeframeDescription(term as TimeFrame)}
                 </p>
 
                 {stockData && stockData.length > 0 ? (
@@ -83,7 +90,7 @@ const Index = () => {
                         name={stock.name}
                         recommendation={stock.aiRecommendation?.potentialGrowth >= 0 ? "Buy" : "Sell"}
                         confidence={stock.aiRecommendation?.confidence ?? 75}
-                        reason={`Based on ${stock.name}'s recent performance and market analysis for ${term.split('-')[0]} term growth`}
+                        reason={stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
                         price={stock.price ?? 0}
                         change={stock.change ?? 0}
                         changePercent={stock.changePercent ?? 0}
@@ -91,6 +98,10 @@ const Index = () => {
                         vwap={stock.vwap ?? 0}
                         growthPotential={stock.aiRecommendation?.potentialGrowth ?? 0}
                         timeframe={term.split('-')[0]}
+                        fundamentalMetrics={stock.fundamentalMetrics}
+                        technicalSignals={stock.technicalSignals}
+                        marketContext={stock.marketContext}
+                        primaryDrivers={stock.primaryDrivers || []}
                       />
                     ))}
                   </div>

@@ -67,42 +67,60 @@ export type Database = {
       }
       stock_recommendations: {
         Row: {
+          confidence_metrics: Json | null
           created_at: string
           entry_range: Json | null
           explanation: string | null
+          fundamental_metrics: Json | null
           hold_sell_recommendation: string | null
           id: string
           long_term_analysis: Json | null
+          market_context: Json | null
           medium_term_analysis: Json | null
+          news_sentiment: Json | null
+          primary_drivers: string[] | null
           recommendation_strength: string | null
           short_term_analysis: Json | null
           symbol: string
+          technical_signals: Json | null
           updated_at: string
         }
         Insert: {
+          confidence_metrics?: Json | null
           created_at?: string
           entry_range?: Json | null
           explanation?: string | null
+          fundamental_metrics?: Json | null
           hold_sell_recommendation?: string | null
           id?: string
           long_term_analysis?: Json | null
+          market_context?: Json | null
           medium_term_analysis?: Json | null
+          news_sentiment?: Json | null
+          primary_drivers?: string[] | null
           recommendation_strength?: string | null
           short_term_analysis?: Json | null
           symbol: string
+          technical_signals?: Json | null
           updated_at?: string
         }
         Update: {
+          confidence_metrics?: Json | null
           created_at?: string
           entry_range?: Json | null
           explanation?: string | null
+          fundamental_metrics?: Json | null
           hold_sell_recommendation?: string | null
           id?: string
           long_term_analysis?: Json | null
+          market_context?: Json | null
           medium_term_analysis?: Json | null
+          news_sentiment?: Json | null
+          primary_drivers?: string[] | null
           recommendation_strength?: string | null
           short_term_analysis?: Json | null
           symbol?: string
+          technical_signals?: Json | null
           updated_at?: string
         }
         Relationships: []
