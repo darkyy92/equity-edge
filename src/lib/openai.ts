@@ -1,6 +1,5 @@
 const OPENAI_API_KEY = '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';
 
-// Queue to manage API requests
 let requestQueue: Array<() => Promise<any>> = [];
 let isProcessingQueue = false;
 
@@ -52,7 +51,7 @@ const makeOpenAIRequest = async (messages: any[]) => {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4',
           messages,
           temperature: 0.7,
           max_tokens: 300,
@@ -61,6 +60,7 @@ const makeOpenAIRequest = async (messages: any[]) => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('OpenAI API error:', errorData);
         
         if (response.status === 429) {
           const delay = baseDelay * Math.pow(2, retryCount);
@@ -95,7 +95,7 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
         const messages = [
           {
             role: 'system',
-            content: 'You are a financial analyst. Provide a concise analysis of the stock using markdown formatting. Keep each section to 2-3 sentences maximum. Use bold for key terms and numbers.',
+            content: 'You are a financial analyst. Provide a concise analysis of the stock using markdown formatting. Keep each section to 2-3 sentences maximum. Use bold for key terms and numbers. Include sections: Investment Strategy, Technical Analysis, Market Analysis, and Risk Factors.',
           },
           {
             role: 'user',
@@ -106,7 +106,6 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
         const data = await makeOpenAIRequest(messages);
         const analysis = data.choices[0].message.content;
 
-        // Convert markdown to HTML
         const sections: AIAnalysisResponse = {
           strategy: markdownToHTML(extractSection(analysis, "Investment Strategy")),
           technical: markdownToHTML(extractSection(analysis, "Technical Analysis")),
