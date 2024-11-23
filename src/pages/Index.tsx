@@ -3,18 +3,18 @@ import MarketOverview from "@/components/MarketOverview";
 import SearchBar from "@/components/SearchBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, ChevronRightIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { TrendingUpIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
+import { getTopStocks } from "@/lib/api";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("short-term");
 
-  const { data: recommendations, isLoading } = useQuery({
+  // Fetch recommendations from Supabase
+  const { data: recommendations, isLoading: isLoadingRecommendations } = useQuery({
     queryKey: ['stockRecommendations'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,6 +25,13 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch real-time stock data from Polygon
+  const { data: stockData, isLoading: isLoadingStocks } = useQuery({
+    queryKey: ['stockData'],
+    queryFn: getTopStocks,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   const getAnalysisForTerm = (stock: any, term: string) => {
@@ -42,13 +49,35 @@ const Index = () => {
 
   const getFilteredRecommendations = () => {
     if (!recommendations) return [];
-    return recommendations.filter(stock => {
+    
+    const filtered = recommendations.filter(stock => {
       const analysis = getAnalysisForTerm(stock, activeTab);
       return analysis && analysis.potentialGrowth !== undefined;
     });
+
+    // If no recommendations in database, use Polygon data
+    if (filtered.length === 0 && stockData) {
+      return stockData.map(stock => ({
+        id: stock.ticker,
+        symbol: stock.ticker,
+        [`${activeTab}_analysis`]: {
+          potentialGrowth: stock.changePercent || 0,
+          confidence: 75,
+          explanation: `Based on ${stock.name}'s recent performance`,
+        }
+      }));
+    }
+
+    return filtered;
   };
 
   const filteredRecommendations = getFilteredRecommendations();
+  const isLoading = isLoadingRecommendations || isLoadingStocks;
+
+  // Find matching stock data for a recommendation
+  const getStockData = (symbol: string) => {
+    return stockData?.find(s => s.ticker === symbol) || null;
+  };
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6 animate-fade-in">
@@ -87,19 +116,21 @@ const Index = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredRecommendations.map((stock) => {
                       const analysis = getAnalysisForTerm(stock, term);
+                      const realTimeData = getStockData(stock.symbol);
+                      
                       return (
                         <RecommendationCard
                           key={stock.id}
                           symbol={stock.symbol}
-                          name={stock.symbol} // We'll update this when we have company names
+                          name={realTimeData?.name || stock.symbol}
                           recommendation={analysis.potentialGrowth >= 0 ? "Buy" : "Sell"}
                           confidence={analysis.confidence || 70}
                           reason={analysis.explanation || "Based on AI analysis"}
-                          price={0} // We'll need to fetch current prices
-                          change={0}
+                          price={realTimeData?.price || 0}
+                          change={realTimeData?.change || 0}
                           changePercent={analysis.potentialGrowth}
-                          volume={0}
-                          vwap={0}
+                          volume={realTimeData?.volume || 0}
+                          vwap={realTimeData?.vwap || 0}
                         />
                       );
                     })}
