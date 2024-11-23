@@ -33,8 +33,8 @@ const StockAnalysis = () => {
     queryKey: ['aiAnalysis', symbol],
     queryFn: () => getAIAnalysis(symbol || '', priceData),
     enabled: !!symbol && !!priceData,
-    refetchInterval: 1800000, // 30 minutes
-    staleTime: 1800000, // 30 minutes
+    refetchInterval: 1800000,
+    staleTime: 1800000,
   });
 
   const { data: recommendation } = useQuery({
@@ -44,9 +44,9 @@ const StockAnalysis = () => {
         .from('stock_recommendations')
         .select('*')
         .eq('symbol', symbol)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     enabled: !!symbol,
@@ -145,17 +145,17 @@ const StockAnalysis = () => {
           </Card>
           
           <div className="space-y-6">
-            {recommendation?.entryRange && (
+            {recommendation?.entry_range && (
               <EntryRangeChart 
                 data={priceData?.chartData || []}
-                entryRange={recommendation.entryRange}
+                entryRange={recommendation.entry_range}
               />
             )}
             
-            {recommendation?.holdSellRecommendation && (
+            {recommendation?.hold_sell_recommendation && (
               <HoldSellIndicator
-                recommendation={recommendation.holdSellRecommendation}
-                strength={recommendation.recommendationStrength || 'yellow'}
+                recommendation={recommendation.hold_sell_recommendation}
+                strength={recommendation.recommendation_strength || 'yellow'}
                 explanation={recommendation.explanation || ''}
               />
             )}

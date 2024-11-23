@@ -10,17 +10,18 @@ import {
   ResponsiveContainer,
   ReferenceArea,
 } from "recharts";
+import { Json } from "@/integrations/supabase/types";
 
 interface EntryRangeChartProps {
   data: any[];
-  entryRange?: {
-    lower: number;
-    upper: number;
-  };
+  entryRange: Json;
 }
 
 const EntryRangeChart = ({ data, entryRange }: EntryRangeChartProps) => {
   if (!data || data.length === 0) return null;
+
+  const range = entryRange as { lower: number; upper: number };
+  if (!range?.lower || !range?.upper) return null;
 
   const minPrice = Math.min(...data.map((d) => d.price));
   const maxPrice = Math.max(...data.map((d) => d.price));
@@ -30,11 +31,9 @@ const EntryRangeChart = ({ data, entryRange }: EntryRangeChartProps) => {
     <Card className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">Price Analysis</h3>
-        {entryRange && (
-          <Badge variant="outline" className="animate-fade-in">
-            Optimal Entry: ${entryRange.lower.toFixed(2)} - ${entryRange.upper.toFixed(2)}
-          </Badge>
-        )}
+        <Badge variant="outline" className="animate-fade-in">
+          Optimal Entry: ${range.lower.toFixed(2)} - ${range.upper.toFixed(2)}
+        </Badge>
       </div>
       
       <div className="h-[300px]">
@@ -60,24 +59,20 @@ const EntryRangeChart = ({ data, entryRange }: EntryRangeChartProps) => {
               dot={false}
               strokeWidth={2}
             />
-            {entryRange && (
-              <ReferenceArea
-                y1={entryRange.lower}
-                y2={entryRange.upper}
-                fill="#4ade80"
-                fillOpacity={0.1}
-                strokeOpacity={0.3}
-              />
-            )}
+            <ReferenceArea
+              y1={range.lower}
+              y2={range.upper}
+              fill="#4ade80"
+              fillOpacity={0.1}
+              strokeOpacity={0.3}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
       
-      {entryRange && (
-        <p className="text-sm text-muted-foreground">
-          Consider entering positions when the price falls within the highlighted range for optimal risk/reward ratio.
-        </p>
-      )}
+      <p className="text-sm text-muted-foreground">
+        Consider entering positions when the price falls within the highlighted range for optimal risk/reward ratio.
+      </p>
     </Card>
   );
 };

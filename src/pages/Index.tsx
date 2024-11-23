@@ -25,8 +25,21 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
-    refetchInterval: 300000, // 5 minutes
+    refetchInterval: 300000,
   });
+
+  const getRecommendationType = (rec: any): "Buy" | "Sell" | "Hold" => {
+    if (!rec.hold_sell_recommendation) return "Hold";
+    const recommendation = rec.hold_sell_recommendation.toLowerCase();
+    if (recommendation.includes('buy')) return "Buy";
+    if (recommendation.includes('sell')) return "Sell";
+    return "Hold";
+  };
+
+  const getConfidence = (analysis: any): number => {
+    if (!analysis) return 70;
+    return analysis.confidence || 70;
+  };
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6 animate-fade-in">
@@ -59,8 +72,8 @@ const Index = () => {
                     key={stock.id}
                     symbol={stock.symbol}
                     name={stock.symbol}
-                    recommendation={stock.hold_sell_recommendation || "Hold"}
-                    confidence={stock.short_term_analysis?.confidence || 70}
+                    recommendation={getRecommendationType(stock)}
+                    confidence={getConfidence(stock.short_term_analysis)}
                     reason={stock.explanation || "Analysis not available"}
                     price={0}
                     change={0}
@@ -80,8 +93,8 @@ const Index = () => {
                     key={stock.id}
                     symbol={stock.symbol}
                     name={stock.symbol}
-                    recommendation={stock.hold_sell_recommendation || "Hold"}
-                    confidence={stock.medium_term_analysis?.confidence || 70}
+                    recommendation={getRecommendationType(stock)}
+                    confidence={getConfidence(stock.medium_term_analysis)}
                     reason={stock.explanation || "Analysis not available"}
                     price={0}
                     change={0}
@@ -101,8 +114,8 @@ const Index = () => {
                     key={stock.id}
                     symbol={stock.symbol}
                     name={stock.symbol}
-                    recommendation={stock.hold_sell_recommendation || "Hold"}
-                    confidence={stock.long_term_analysis?.confidence || 70}
+                    recommendation={getRecommendationType(stock)}
+                    confidence={getConfidence(stock.long_term_analysis)}
                     reason={stock.explanation || "Analysis not available"}
                     price={0}
                     change={0}
