@@ -77,7 +77,7 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
           <h4 className="font-medium mb-2">Monte Carlo Simulation</h4>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={analysis?.monteCarlo?.slice(0, 100) || []}>
+              <AreaChart data={analysis?.monteCarlo || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.1} />
                 <XAxis dataKey="date" stroke="#888888" />
                 <YAxis stroke="#888888" />
@@ -108,8 +108,8 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
             Based on 10,000 Monte Carlo simulations over {timeframe}:
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>70% chance of price between ${analysis?.monteCarlo?.lowerBound} and ${analysis?.monteCarlo?.upperBound}</li>
-            <li>Median projected price: ${analysis?.monteCarlo?.median}</li>
+            <li>70% chance of price between ${analysis?.monteCarlo[0]?.lowerBound} and ${analysis?.monteCarlo[0]?.upperBound}</li>
+            <li>Median projected price: ${analysis?.monteCarlo[0]?.median}</li>
             <li>Current Elliott Wave: {analysis?.elliottWave?.currentWave}</li>
           </ul>
         </div>
@@ -121,11 +121,13 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
 // Helper functions for analysis (simplified for demo)
 const generateMonteCarlo = (historicalData: any[], iterations: number) => {
   // Simplified Monte Carlo simulation
-  return {
-    lowerBound: 100,
-    upperBound: 150,
-    median: 125,
-  };
+  // Generate an array of data points instead of a single object
+  return Array.from({ length: 100 }, (_, i) => ({
+    date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    lowerBound: 100 - Math.random() * 10,
+    upperBound: 150 + Math.random() * 10,
+    median: 125 + (Math.random() - 0.5) * 10,
+  }));
 };
 
 const analyzeElliottWave = (historicalData: any[]) => {
