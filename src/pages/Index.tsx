@@ -49,17 +49,10 @@ const Index = () => {
     try {
       const { error } = await supabase
         .from('stock_recommendations')
-        .upsert(
-          recommendations.map(rec => ({
-            symbol: rec.symbol,
-            short_term_analysis: rec.short_term_analysis,
-            medium_term_analysis: rec.medium_term_analysis,
-            long_term_analysis: rec.long_term_analysis,
-            explanation: rec.explanation,
-            updated_at: new Date().toISOString(),
-          })),
-          { onConflict: 'symbol' }
-        );
+        .upsert(recommendations, {
+          onConflict: 'symbol',
+          ignoreDuplicates: false
+        });
 
       if (error) throw error;
     } catch (error) {
@@ -82,7 +75,7 @@ const Index = () => {
     if (stock.ticker) {
       return {
         potentialGrowth: stock.changePercent || 0,
-        confidence: 75,
+        confidence: term === 'short-term' ? 75 : term === 'medium-term' ? 70 : 65,
         timeframe: term,
       };
     }
