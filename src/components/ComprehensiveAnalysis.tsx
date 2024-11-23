@@ -5,45 +5,102 @@ import {
   BookOpenIcon,
   TrendingUpIcon,
   GlobeIcon,
-  UsersIcon,
+  RefreshCcwIcon,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 import FundamentalAnalysis from "./analysis/FundamentalAnalysis";
 import NewsAnalysis from "./analysis/NewsAnalysis";
+import LoadingLogo from "./LoadingLogo";
 
 interface ComprehensiveAnalysisProps {
   symbol: string;
 }
 
 const ComprehensiveAnalysis = ({ symbol }: ComprehensiveAnalysisProps) => {
-  const { data: details } = useQuery({
+  const { data: details, isLoading: isLoadingDetails, error: detailsError, refetch: refetchDetails } = useQuery({
     queryKey: ["companyDetails", symbol],
     queryFn: async () => {
-      const response = await fetch(
-        `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.POLYGON_API_KEY}`
-      );
-      const data = await response.json();
-      return data.results;
+      try {
+        const response = await fetch(
+          `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.POLYGON_API_KEY}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch company details');
+        const data = await response.json();
+        return data.results;
+      } catch (error) {
+        console.error('Error fetching company details:', error);
+        throw error;
+      }
     },
+    retry: 2,
+    staleTime: 300000, // 5 minutes
   });
 
-  const { data: aggregates } = useQuery({
+  const { data: aggregates, isLoading: isLoadingAggregates, error: aggregatesError, refetch: refetchAggregates } = useQuery({
     queryKey: ["aggregates", symbol],
     queryFn: async () => {
-      const response = await fetch(
-        `https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?apiKey=${process.env.POLYGON_API_KEY}`
-      );
-      const data = await response.json();
-      return data.results?.[0];
+      try {
+        const response = await fetch(
+          `https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?apiKey=${process.env.POLYGON_API_KEY}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch aggregates');
+        const data = await response.json();
+        return data.results?.[0];
+      } catch (error) {
+        console.error('Error fetching aggregates:', error);
+        throw error;
+      }
     },
+    retry: 2,
+    staleTime: 60000, // 1 minute
   });
+
+  const isLoading = isLoadingDetails || isLoadingAggregates;
+  const error = detailsError || aggregatesError;
+
+  const handleRetry = () => {
+    toast({
+      title: "Retrying...",
+      description: "Fetching fresh data for your analysis.",
+    });
+    refetchDetails();
+    refetchAggregates();
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <LoadingLogo />
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <p className="text-muted-foreground text-center">
+            Oops! Something went wrong while loading your analysis.
+          </p>
+          <Button
+            variant="outline"
+            onClick={handleRetry}
+            className="flex items-center space-x-2"
+          >
+            <RefreshCcwIcon className="w-4 h-4" />
+            <span>Retry</span>
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   if (!details || !aggregates) {
     return (
-      <Card className="p-6 animate-pulse">
-        <div className="h-4 bg-muted rounded w-1/4 mb-4"></div>
-        <div className="space-y-3">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
+      <Card className="p-6">
+        <div className="text-center text-muted-foreground">
+          No data available for this stock.
         </div>
       </Card>
     );
