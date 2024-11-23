@@ -1,14 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+
+const POLYGON_API_KEY = Deno.env.get('POLYGON_API_KEY');
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const POLYGON_API_KEY = Deno.env.get('POLYGON_API_KEY');
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -33,9 +32,14 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial analyst. Recommend 9 stocks for ${timeframe}-term investment. Return a JSON array with objects containing: symbol (stock ticker), reason (brief explanation), confidence (0-100), potentialGrowth (-100 to 100).`
+            content: 'You are a financial analyst. Return a JSON array of objects, each containing: symbol (stock ticker), reason (brief explanation), confidence (0-100), potentialGrowth (-100 to 100). Format your entire response as valid JSON.'
+          },
+          {
+            role: 'user',
+            content: `Recommend 9 stocks for ${timeframe}-term investment. Return ONLY a JSON array.`
           }
         ],
+        response_format: { type: "json_object" },
         temperature: 0.7,
       }),
     });
@@ -56,7 +60,7 @@ serve(async (req) => {
 
     // 2. Fetch stock details from Polygon
     const enrichedRecommendations = await Promise.all(
-      recommendations.map(async (rec: any) => {
+      recommendations.stocks.map(async (rec: any) => {
         try {
           console.log('Fetching Polygon data for:', rec.symbol);
           const [detailsResponse, priceResponse] = await Promise.all([
@@ -102,14 +106,13 @@ serve(async (req) => {
 
     console.log('Enriched recommendations:', enrichedRecommendations);
 
-    // 3. Store recommendations in database
+    // Filter out recommendations with errors
     const validRecommendations = enrichedRecommendations.filter((rec: any) => !rec.error);
     
     if (validRecommendations.length === 0) {
       throw new Error('No valid stock recommendations could be generated');
     }
 
-    // 4. Return enriched recommendations
     return new Response(
       JSON.stringify({
         recommendations: validRecommendations
