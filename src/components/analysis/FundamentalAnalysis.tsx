@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 
+const POLYGON_API_KEY = 's3Kgk9rqPEj4IBl3Bo8Aiv7y53slSpSc';
+
 interface FundamentalAnalysisProps {
   symbol: string;
 }
@@ -10,7 +12,7 @@ const FundamentalAnalysis = ({ symbol }: FundamentalAnalysisProps) => {
     queryKey: ["fundamentals", symbol],
     queryFn: async () => {
       const response = await fetch(
-        `https://api.polygon.io/v2/reference/financials/${symbol}?apiKey=${process.env.POLYGON_API_KEY}`
+        `https://api.polygon.io/v2/reference/financials/${symbol}?apiKey=${POLYGON_API_KEY}`
       );
       const data = await response.json();
       return data.results?.[0] || null;

@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 
+const POLYGON_API_KEY = 's3Kgk9rqPEj4IBl3Bo8Aiv7y53slSpSc';
+
 interface NewsAnalysisProps {
   symbol: string;
 }
@@ -10,7 +12,7 @@ const NewsAnalysis = ({ symbol }: NewsAnalysisProps) => {
     queryKey: ["news", symbol],
     queryFn: async () => {
       const response = await fetch(
-        `https://api.polygon.io/v2/reference/news?ticker=${symbol}&apiKey=${process.env.POLYGON_API_KEY}`
+        `https://api.polygon.io/v2/reference/news?ticker=${symbol}&apiKey=${POLYGON_API_KEY}`
       );
       const data = await response.json();
       return data.results || [];
