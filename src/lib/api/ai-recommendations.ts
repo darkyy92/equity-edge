@@ -1,4 +1,4 @@
-import { AIRecommendation, StockTicker } from "../types";
+import { AIRecommendation, StockTicker, FundamentalMetrics, TechnicalSignals, MarketContext } from "../types";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,14 +17,14 @@ export const getAIRecommendations = async (timeframe: 'short' | 'medium' | 'long
     if (existingRecommendations && existingRecommendations.length > 0) {
       const mostRecent = new Date(existingRecommendations[0].created_at);
       if (Date.now() - mostRecent.getTime() < 60 * 60 * 1000) {
-        // Transform database records to StockTicker format
+        // Transform database records to StockTicker format with proper type assertions
         return existingRecommendations.map(rec => ({
           ticker: rec.symbol,
           symbol: rec.symbol,
-          name: rec.symbol, // We'll enrich this later with Polygon data
-          market: 'US', // Default value, will be enriched
+          name: rec.symbol, // Will be enriched later
+          market: 'US',
           locale: 'us',
-          primary_exchange: 'NYSE', // Default value, will be enriched
+          primary_exchange: 'NYSE',
           type: 'CS',
           active: true,
           currency_name: 'USD',
@@ -32,17 +32,21 @@ export const getAIRecommendations = async (timeframe: 'short' | 'medium' | 'long
           composite_figi: '',
           share_class_figi: '',
           last_updated_utc: rec.updated_at,
-          isin: rec.isin,
-          valor_number: rec.valor_number,
+          isin: rec.isin || undefined,
+          valor_number: rec.valor_number || undefined,
+          fundamentalMetrics: rec.fundamental_metrics as FundamentalMetrics,
+          technicalSignals: rec.technical_signals as TechnicalSignals,
+          marketContext: rec.market_context as MarketContext,
+          primaryDrivers: rec.primary_drivers || [],
           aiRecommendation: {
             timeframe,
-            potentialGrowth: rec[`${timeframe}_term_analysis`]?.potentialGrowth || 0,
-            confidence: rec.confidence_metrics?.confidence || 75,
+            potentialGrowth: (rec[`${timeframe}_term_analysis`] as any)?.potentialGrowth || 0,
+            confidence: (rec.confidence_metrics as any)?.confidence || 75,
             explanation: rec.explanation || '',
-            fundamentalMetrics: rec.fundamental_metrics,
-            technicalSignals: rec.technical_signals,
-            marketContext: rec.market_context,
-            primaryDrivers: rec.primary_drivers
+            fundamentalMetrics: rec.fundamental_metrics as FundamentalMetrics,
+            technicalSignals: rec.technical_signals as TechnicalSignals,
+            marketContext: rec.market_context as MarketContext,
+            primaryDrivers: rec.primary_drivers || []
           }
         }));
       }
@@ -112,6 +116,7 @@ export const getAIRecommendations = async (timeframe: 'short' | 'medium' | 'long
         potentialGrowth: rec.potentialGrowth,
         confidence: rec.confidence,
         explanation: rec.reason,
+        primaryDrivers: []
       }
     }));
   } catch (error) {

@@ -32,7 +32,7 @@ export interface AIRecommendation {
   timeframe: 'short' | 'medium' | 'long';
   potentialGrowth: number;
   confidence: number;
-  explanation: string;
+  explanation?: string;
   fundamentalMetrics?: FundamentalMetrics;
   technicalSignals?: TechnicalSignals;
   marketContext?: MarketContext;
@@ -41,7 +41,7 @@ export interface AIRecommendation {
 
 export interface StockTicker {
   ticker: string;
-  symbol?: string; // Added for compatibility with database
+  symbol: string; // Added for compatibility with database
   name: string;
   market: string;
   locale: string;
