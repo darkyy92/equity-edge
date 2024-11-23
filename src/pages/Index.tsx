@@ -14,16 +14,16 @@ const Index = () => {
   const { data: topStocks } = useQuery<StockTicker[]>({
     queryKey: ['topStocks'],
     queryFn: getTopStocks,
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: 60000,
   });
 
   const { data: recommendedStocks } = useQuery<StockTicker[]>({
     queryKey: ['recommendedStocks'],
     queryFn: getRecommendedStocks,
-    refetchInterval: 1800000, // Refetch every 30 minutes
+    refetchInterval: 1800000,
   });
 
-  const { data: aiReasons } = useQuery({
+  const { data: aiReasons, isLoading: isAILoading } = useQuery({
     queryKey: ['aiReasons', recommendedStocks],
     queryFn: async () => {
       if (!recommendedStocks) return {};
@@ -35,7 +35,7 @@ const Index = () => {
       return reasons;
     },
     enabled: !!recommendedStocks,
-    refetchInterval: 1800000, // Refetch every 30 minutes
+    refetchInterval: 1800000,
   });
 
   useEffect(() => {
@@ -94,7 +94,7 @@ const Index = () => {
                 name={stock.name}
                 recommendation={stock.changePercent && stock.changePercent >= 0 ? "Buy" : "Hold"}
                 confidence={Math.floor(Math.random() * 30) + 70}
-                reason={aiReasons?.[stock.ticker] || "Analyzing market data..."}
+                reason={isAILoading ? "Analyzing market data..." : (aiReasons?.[stock.ticker] || "Analysis not available")}
                 price={liveData[stock.ticker] ?? stock.price ?? 0}
                 change={stock.change ?? 0}
                 changePercent={stock.changePercent ?? 0}

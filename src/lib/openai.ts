@@ -51,10 +51,10 @@ const makeOpenAIRequest = async (messages: any[]) => {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4',
+          model: 'gpt-4o-mini',
           messages,
           temperature: 0.7,
-          max_tokens: 300,
+          max_tokens: 100,
         }),
       });
 
@@ -95,7 +95,7 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
         const messages = [
           {
             role: 'system',
-            content: 'You are a financial analyst. Provide a concise analysis of the stock using markdown formatting. Keep each section to 2-3 sentences maximum. Use bold for key terms and numbers. Include sections: Investment Strategy, Technical Analysis, Market Analysis, and Risk Factors.',
+            content: 'You are a financial analyst. Provide a very concise 1-2 sentence analysis of the stock. Focus only on the most important aspect.',
           },
           {
             role: 'user',
@@ -107,10 +107,10 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
         const analysis = data.choices[0].message.content;
 
         const sections: AIAnalysisResponse = {
-          strategy: markdownToHTML(extractSection(analysis, "Investment Strategy")),
-          technical: markdownToHTML(extractSection(analysis, "Technical Analysis")),
-          market: markdownToHTML(extractSection(analysis, "Market Analysis")),
-          risks: markdownToHTML(extractSection(analysis, "Risk Factors")),
+          strategy: analysis,
+          technical: "",
+          market: "",
+          risks: "",
         };
 
         resolve(sections);
