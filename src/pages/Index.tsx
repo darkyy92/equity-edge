@@ -52,7 +52,7 @@ const Index = () => {
     
     const filtered = recommendations.filter(stock => {
       const analysis = getAnalysisForTerm(stock, activeTab);
-      return analysis && analysis.potentialGrowth !== undefined;
+      return analysis && typeof analysis.potentialGrowth !== 'undefined';
     });
 
     // If no recommendations in database, use Polygon data
@@ -117,6 +117,9 @@ const Index = () => {
                     {filteredRecommendations.map((stock) => {
                       const analysis = getAnalysisForTerm(stock, term);
                       const realTimeData = getStockData(stock.symbol);
+                      
+                      // Skip rendering if analysis is undefined
+                      if (!analysis) return null;
                       
                       return (
                         <RecommendationCard
