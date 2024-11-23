@@ -5,10 +5,38 @@ export interface MarketStatus {
   currencies: Record<string, string>;
 }
 
+export interface FundamentalMetrics {
+  roe?: number;
+  profitMargin?: number;
+  revenueGrowth?: number;
+  peRatio?: number;
+  debtToEquity?: number;
+}
+
+export interface TechnicalSignals {
+  rsi?: number;
+  macd?: string;
+  movingAverages?: string;
+  supportLevels?: number[];
+  resistanceLevels?: number[];
+}
+
+export interface MarketContext {
+  sectorTrend?: string;
+  peerComparison?: string;
+  marketSentiment?: string;
+  industryPosition?: string;
+}
+
 export interface AIRecommendation {
   timeframe: 'short' | 'medium' | 'long';
   potentialGrowth: number;
   confidence: number;
+  explanation?: string;
+  fundamentalMetrics?: FundamentalMetrics;
+  technicalSignals?: TechnicalSignals;
+  marketContext?: MarketContext;
+  primaryDrivers?: string[];
 }
 
 export interface StockTicker {
@@ -29,35 +57,9 @@ export interface StockTicker {
   changePercent?: number;
   volume?: number;
   vwap?: number;
+  fundamentalMetrics?: FundamentalMetrics;
+  technicalSignals?: TechnicalSignals;
+  marketContext?: MarketContext;
+  primaryDrivers?: string[];
   aiRecommendation?: AIRecommendation;
-}
-
-export interface StockRecommendation {
-  id: string;
-  symbol: string;
-  shortTermAnalysis?: {
-    potentialGrowth: number;
-    timeframe: string;
-    confidence: number;
-  };
-  mediumTermAnalysis?: {
-    potentialGrowth: number;
-    timeframe: string;
-    confidence: number;
-  };
-  longTermAnalysis?: {
-    potentialGrowth: number;
-    timeframe: string;
-    drivers: string[];
-  };
-  entryRange?: {
-    lower: number;
-    upper: number;
-    confidence: number;
-  };
-  holdSellRecommendation?: 'hold' | 'sell' | 'review';
-  recommendationStrength?: 'green' | 'yellow' | 'red';
-  explanation?: string;
-  createdAt: string;
-  updatedAt: string;
 }
