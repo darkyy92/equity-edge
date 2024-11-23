@@ -47,12 +47,15 @@ const makeOpenAIRequest = async (messages: any[]) => {
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
+        mode: 'cors',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Access-Control-Allow-Origin': '*',
         },
         body: JSON.stringify({
-          model: 'gpt-4o',  // Updated model name
+          model: 'gpt-4o-mini',
           messages,
           temperature: 0.7,
           max_tokens: 300,

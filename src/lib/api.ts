@@ -4,16 +4,30 @@ import { StockTicker } from "./types";
 const POLYGON_API_KEY = 's3Kgk9rqPEj4IBl3Bo8Aiv7y53slSpSc';
 const BASE_URL = 'https://api.polygon.io';
 
+const fetchWithCORS = async (url: string, options: RequestInit = {}) => {
+  const defaultOptions: RequestInit = {
+    mode: 'cors',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    ...options,
+  };
+  
+  return fetch(url, defaultOptions);
+};
+
 export const getTopStocks = async (): Promise<StockTicker[]> => {
   try {
-    const response = await fetch(
+    const response = await fetchWithCORS(
       `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/gainers?timespan=week&limit=6&apiKey=${POLYGON_API_KEY}`
     );
     if (!response.ok) throw new Error('Failed to fetch top stocks');
     const data = await response.json();
     
     const results = await Promise.all(data.tickers.map(async (ticker: any) => {
-      const detailsResponse = await fetch(
+      const detailsResponse = await fetchWithCORS(
         `${BASE_URL}/v3/reference/tickers/${ticker.ticker}?apiKey=${POLYGON_API_KEY}`
       );
       const details = await detailsResponse.json();
