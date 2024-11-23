@@ -12,6 +12,9 @@ import { getAIAnalysis, type AIAnalysisResponse } from "@/lib/openai";
 import { cn } from "@/lib/utils";
 import AdvancedAnalysis from "@/components/AdvancedAnalysis";
 import ComprehensiveAnalysis from "@/components/ComprehensiveAnalysis";
+import EntryRangeChart from "@/components/EntryRangeChart";
+import HoldSellIndicator from "@/components/HoldSellIndicator";
+import { supabase } from "@/integrations/supabase/client";
 
 type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
 
@@ -32,6 +35,21 @@ const StockAnalysis = () => {
     enabled: !!symbol && !!priceData,
     refetchInterval: 1800000, // 30 minutes
     staleTime: 1800000, // 30 minutes
+  });
+
+  const { data: recommendation } = useQuery({
+    queryKey: ['stockRecommendation', symbol],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stock_recommendations')
+        .select('*')
+        .eq('symbol', symbol)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!symbol,
   });
 
   if (!symbol) return <div>Invalid stock symbol</div>;
@@ -126,7 +144,22 @@ const StockAnalysis = () => {
             </div>
           </Card>
           
-          <ComprehensiveAnalysis symbol={symbol || ''} />
+          <div className="space-y-6">
+            {recommendation?.entryRange && (
+              <EntryRangeChart 
+                data={priceData?.chartData || []}
+                entryRange={recommendation.entryRange}
+              />
+            )}
+            
+            {recommendation?.holdSellRecommendation && (
+              <HoldSellIndicator
+                recommendation={recommendation.holdSellRecommendation}
+                strength={recommendation.recommendationStrength || 'yellow'}
+                explanation={recommendation.explanation || ''}
+              />
+            )}
+          </div>
         </div>
 
         <AdvancedAnalysis 
@@ -134,6 +167,8 @@ const StockAnalysis = () => {
           historicalData={priceData?.chartData || []}
         />
 
+        <ComprehensiveAnalysis symbol={symbol || ''} />
+        
         <Card className={cn(
           "p-6 relative overflow-hidden",
           isAILoading && "before:absolute before:inset-0 before:bg-gradient-to-r before:from-purple-400 before:via-pink-500 before:to-red-500 before:animate-pulse before:opacity-20"

@@ -24,3 +24,33 @@ export interface StockTicker {
   volume?: number;
   vwap?: number;
 }
+
+export interface StockRecommendation {
+  id: string;
+  symbol: string;
+  shortTermAnalysis?: {
+    potentialGrowth: number;
+    timeframe: string;
+    confidence: number;
+  };
+  mediumTermAnalysis?: {
+    potentialGrowth: number;
+    timeframe: string;
+    confidence: number;
+  };
+  longTermAnalysis?: {
+    potentialGrowth: number;
+    timeframe: string;
+    drivers: string[];
+  };
+  entryRange?: {
+    lower: number;
+    upper: number;
+    confidence: number;
+  };
+  holdSellRecommendation?: 'hold' | 'sell' | 'review';
+  recommendationStrength?: 'green' | 'yellow' | 'red';
+  explanation?: string;
+  createdAt: string;
+  updatedAt: string;
+}

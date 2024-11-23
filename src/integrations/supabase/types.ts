@@ -65,6 +65,48 @@ export type Database = {
           },
         ]
       }
+      stock_recommendations: {
+        Row: {
+          created_at: string
+          entry_range: Json | null
+          explanation: string | null
+          hold_sell_recommendation: string | null
+          id: string
+          long_term_analysis: Json | null
+          medium_term_analysis: Json | null
+          recommendation_strength: string | null
+          short_term_analysis: Json | null
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entry_range?: Json | null
+          explanation?: string | null
+          hold_sell_recommendation?: string | null
+          id?: string
+          long_term_analysis?: Json | null
+          medium_term_analysis?: Json | null
+          recommendation_strength?: string | null
+          short_term_analysis?: Json | null
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entry_range?: Json | null
+          explanation?: string | null
+          hold_sell_recommendation?: string | null
+          id?: string
+          long_term_analysis?: Json | null
+          medium_term_analysis?: Json | null
+          recommendation_strength?: string | null
+          short_term_analysis?: Json | null
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       watchlist_stocks: {
         Row: {
           added_at: string
