@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { TrendingUpIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
 import { getTopStocks } from "@/lib/api";
@@ -17,61 +16,20 @@ type TimeFrame = "short-term" | "medium-term" | "long-term";
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
 
-  const { data: stockData, isLoading: isLoadingStocks } = useQuery({
+  const { data: stockData, isLoading: isLoadingStocks, error } = useQuery({
     queryKey: ['stockData', activeTab],
     queryFn: () => getTopStocks(activeTab.split('-')[0] as 'short' | 'medium' | 'long'),
     staleTime: 15 * 60 * 1000,
     refetchInterval: 15 * 60 * 1000,
-    meta: {
-      onSuccess: async (data: StockTicker[]) => {
-        if (!data?.length) return;
-
-        try {
-          const recommendations = data.map(stock => ({
-            symbol: stock.ticker,
-            short_term_analysis: stock.aiRecommendation?.timeframe === 'short' ? {
-              potentialGrowth: stock.aiRecommendation.potentialGrowth,
-              confidence: stock.aiRecommendation.confidence,
-              timeframe: "short",
-            } : null,
-            medium_term_analysis: stock.aiRecommendation?.timeframe === 'medium' ? {
-              potentialGrowth: stock.aiRecommendation.potentialGrowth,
-              confidence: stock.aiRecommendation.confidence,
-              timeframe: "medium",
-            } : null,
-            long_term_analysis: stock.aiRecommendation?.timeframe === 'long' ? {
-              potentialGrowth: stock.aiRecommendation.potentialGrowth,
-              confidence: stock.aiRecommendation.confidence,
-              timeframe: "long",
-            } : null,
-            explanation: `Based on ${stock.name}'s recent performance and market trends`,
-          }));
-
-          const { error } = await supabase
-            .from('stock_recommendations')
-            .upsert(recommendations, {
-              onConflict: 'symbol',
-            });
-
-          if (error) {
-            console.error('Error caching stock data:', error);
-            toast({
-              title: "Warning",
-              description: "Could not cache stock data, but live data is still available",
-              variant: "destructive",
-            });
-          }
-        } catch (error) {
-          console.error('Error in data processing:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process stock data",
-            variant: "destructive",
-          });
-        }
-      }
-    }
   });
+
+  if (error) {
+    toast({
+      title: "Error loading recommendations",
+      description: "Unable to fetch stock recommendations. Please try again later.",
+      variant: "destructive",
+    });
+  }
 
   if (isLoadingStocks) {
     return (
