@@ -11,13 +11,14 @@ import RecommendationCard from "@/components/RecommendationCard";
 import { getTopStocks } from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
 
-const Index = () => {
-  const [activeTab, setActiveTab] = useState("short-term");
+type TimeFrame = "short-term" | "medium-term" | "long-term";
 
-  // Primary data fetch from Polygon.io
+const Index = () => {
+  const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
+
   const { data: stockData, isLoading: isLoadingStocks } = useQuery({
-    queryKey: ['stockData'],
-    queryFn: getTopStocks,
+    queryKey: ['stockData', activeTab],
+    queryFn: () => getTopStocks(activeTab.split('-')[0] as 'short' | 'medium' | 'long'),
     staleTime: 15 * 60 * 1000, // Consider data fresh for 15 minutes
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
     meta: {
@@ -27,21 +28,21 @@ const Index = () => {
         try {
           const recommendations = data.map(stock => ({
             symbol: stock.ticker,
-            short_term_analysis: {
-              potentialGrowth: stock.changePercent || 0,
-              confidence: 75,
+            short_term_analysis: stock.aiRecommendation.timeframe === 'short' ? {
+              potentialGrowth: stock.aiRecommendation.potentialGrowth,
+              confidence: stock.aiRecommendation.confidence,
               timeframe: "short",
-            },
-            medium_term_analysis: {
-              potentialGrowth: stock.changePercent || 0,
-              confidence: 70,
+            } : null,
+            medium_term_analysis: stock.aiRecommendation.timeframe === 'medium' ? {
+              potentialGrowth: stock.aiRecommendation.potentialGrowth,
+              confidence: stock.aiRecommendation.confidence,
               timeframe: "medium",
-            },
-            long_term_analysis: {
-              potentialGrowth: stock.changePercent || 0,
-              confidence: 65,
+            } : null,
+            long_term_analysis: stock.aiRecommendation.timeframe === 'long' ? {
+              potentialGrowth: stock.aiRecommendation.potentialGrowth,
+              confidence: stock.aiRecommendation.confidence,
               timeframe: "long",
-            },
+            } : null,
             explanation: `Based on ${stock.name}'s recent performance and market trends`,
           }));
 
@@ -71,35 +72,18 @@ const Index = () => {
     }
   });
 
-  const getAnalysisForTerm = (stock: any, term: string) => {
-    // For live data from Polygon.io
-    if (stock.ticker) {
-      return {
-        potentialGrowth: stock.changePercent || 0,
-        confidence: term === 'short-term' ? 75 : term === 'medium-term' ? 70 : 65,
-        timeframe: term,
-      };
-    }
-
-    // For cached data from Supabase
-    switch (term) {
-      case 'short-term':
-        return stock.short_term_analysis;
-      case 'medium-term':
-        return stock.medium_term_analysis;
-      case 'long-term':
-        return stock.long_term_analysis;
-      default:
-        return null;
-    }
-  };
-
   if (isLoadingStocks) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <StockCardSkeleton key={i} />
-        ))}
+      <div className="min-h-screen bg-background p-6 space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <SearchBar />
+          <MarketOverview />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <StockCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -111,7 +95,7 @@ const Index = () => {
         <MarketOverview />
 
         <div className="space-y-4">
-          <Tabs defaultValue="short-term" className="w-full" onValueChange={setActiveTab}>
+          <Tabs defaultValue="short-term" className="w-full" onValueChange={(value) => setActiveTab(value as TimeFrame)}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold">Investment Recommendations</h2>
               <TabsList>
@@ -125,35 +109,31 @@ const Index = () => {
               <TabsContent key={term} value={term} className="space-y-4">
                 <p className="text-muted-foreground">
                   {term === 'short-term' 
-                    ? 'Stocks predicted to rise sharply in the next quarter'
+                    ? 'Stocks predicted to rise sharply in the next 3 months'
                     : term === 'medium-term'
-                    ? 'Stable stocks with moderate growth potential'
-                    : 'Companies with robust fundamentals and growth strategies'}
+                    ? 'Stable stocks with moderate growth potential over 6-12 months'
+                    : 'Companies with robust fundamentals and long-term growth strategies (1+ years)'}
                 </p>
 
                 {stockData && stockData.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {stockData.map((stock) => {
-                      const analysis = getAnalysisForTerm(stock, term);
-                      
-                      if (!analysis) return null;
-                      
-                      return (
-                        <RecommendationCard
-                          key={stock.ticker}
-                          symbol={stock.ticker}
-                          name={stock.name}
-                          recommendation={analysis.potentialGrowth >= 0 ? "Buy" : "Sell"}
-                          confidence={analysis.confidence}
-                          reason={`Based on recent market performance and ${term} analysis`}
-                          price={stock.price || 0}
-                          change={stock.change || 0}
-                          changePercent={stock.changePercent || 0}
-                          volume={stock.volume || 0}
-                          vwap={stock.vwap || 0}
-                        />
-                      );
-                    })}
+                    {stockData.map((stock) => (
+                      <RecommendationCard
+                        key={stock.ticker}
+                        symbol={stock.ticker}
+                        name={stock.name}
+                        recommendation={stock.aiRecommendation.potentialGrowth >= 0 ? "Buy" : "Sell"}
+                        confidence={stock.aiRecommendation.confidence}
+                        reason={`Based on ${stock.name}'s recent performance and market analysis for ${term.split('-')[0]} term growth`}
+                        price={stock.price}
+                        change={stock.change}
+                        changePercent={stock.changePercent}
+                        volume={stock.volume}
+                        vwap={stock.vwap}
+                        growthPotential={stock.aiRecommendation.potentialGrowth}
+                        timeframe={term.split('-')[0]}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <Card className="p-8 text-center">

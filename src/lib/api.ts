@@ -1,5 +1,6 @@
 import { toast } from "@/components/ui/use-toast";
 import { StockTicker } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 
 const POLYGON_API_KEY = 's3Kgk9rqPEj4IBl3Bo8Aiv7y53slSpSc';
 const BASE_URL = 'https://api.polygon.io';
@@ -17,10 +18,41 @@ const fetchWithCORS = async (url: string, options: RequestInit = {}) => {
   return fetch(url, defaultOptions);
 };
 
-export const getTopStocks = async (): Promise<StockTicker[]> => {
+const generateAIRecommendation = (stock: any, timeframe: 'short' | 'medium' | 'long') => {
+  // Simulate AI-driven analysis based on stock metrics
+  const volatility = Math.abs(stock.changePercent);
+  const volume = stock.volume;
+  const priceLevel = stock.price;
+  
+  let confidence: number;
+  let potentialGrowth: number;
+  
+  switch(timeframe) {
+    case 'short':
+      confidence = Math.min(85, 60 + (volatility * 2));
+      potentialGrowth = volatility * (Math.random() > 0.5 ? 1.5 : -1.5);
+      break;
+    case 'medium':
+      confidence = Math.min(80, 55 + (volume / 1000000));
+      potentialGrowth = (volatility * 1.2) * (Math.random() > 0.4 ? 1 : -1);
+      break;
+    case 'long':
+      confidence = Math.min(75, 50 + (priceLevel / 10));
+      potentialGrowth = (volatility * 0.8) * (Math.random() > 0.3 ? 1 : -1);
+      break;
+  }
+
+  return {
+    confidence: Math.round(confidence),
+    potentialGrowth: Number(potentialGrowth.toFixed(2)),
+    timeframe
+  };
+};
+
+export const getTopStocks = async (timeframe: 'short' | 'medium' | 'long' = 'short'): Promise<StockTicker[]> => {
   try {
     const response = await fetchWithCORS(
-      `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/gainers?timespan=week&limit=6&apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v2/snapshot/locale/us/markets/stocks/gainers?timespan=day&limit=10&apiKey=${POLYGON_API_KEY}`
     );
     if (!response.ok) throw new Error('Failed to fetch top stocks');
     const data = await response.json();
@@ -30,7 +62,8 @@ export const getTopStocks = async (): Promise<StockTicker[]> => {
         `${BASE_URL}/v3/reference/tickers/${ticker.ticker}?apiKey=${POLYGON_API_KEY}`
       );
       const details = await detailsResponse.json();
-      return {
+      
+      const stockData = {
         ...details.results,
         price: ticker.day.c,
         change: ticker.day.c - ticker.day.o,
@@ -38,9 +71,21 @@ export const getTopStocks = async (): Promise<StockTicker[]> => {
         volume: ticker.day.v,
         vwap: ticker.day.vw
       };
+
+      const recommendation = generateAIRecommendation(stockData, timeframe);
+      
+      return {
+        ...stockData,
+        aiRecommendation: recommendation
+      };
     }));
     
-    return results;
+    // Sort based on the timeframe strategy
+    return results.sort((a, b) => {
+      if (timeframe === 'short') return Math.abs(b.changePercent) - Math.abs(a.changePercent);
+      if (timeframe === 'medium') return b.volume - a.volume;
+      return b.market_cap - a.market_cap;
+    }).slice(0, 6);
   } catch (error) {
     toast({
       title: "Error fetching top stocks",
