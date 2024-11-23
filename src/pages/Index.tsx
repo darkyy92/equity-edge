@@ -41,14 +41,22 @@ const Index = () => {
     return analysis.confidence || 70;
   };
 
+  const getAnalysisForTerm = (stock: any, term: string) => {
+    switch (term) {
+      case 'short-term':
+        return stock.short_term_analysis;
+      case 'medium-term':
+        return stock.medium_term_analysis;
+      case 'long-term':
+        return stock.long_term_analysis;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6 space-y-6 animate-fade-in">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col space-y-2">
-          <h1 className="text-4xl font-bold">Market Pulse</h1>
-          <p className="text-muted-foreground">AI-Powered Stock Analysis & Recommendations</p>
-        </div>
-
         <SearchBar />
 
         <MarketOverview />
@@ -67,7 +75,7 @@ const Index = () => {
             <TabsContent value="short-term" className="space-y-4">
               <p className="text-muted-foreground">Stocks predicted to rise sharply in the next quarter</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recommendations?.filter(rec => rec.short_term_analysis)?.map((stock) => (
+                {recommendations?.map((stock) => (
                   <RecommendationCard
                     key={stock.id}
                     symbol={stock.symbol}
@@ -88,7 +96,7 @@ const Index = () => {
             <TabsContent value="medium-term" className="space-y-4">
               <p className="text-muted-foreground">Stable stocks with moderate growth potential</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recommendations?.filter(rec => rec.medium_term_analysis)?.map((stock) => (
+                {recommendations?.map((stock) => (
                   <RecommendationCard
                     key={stock.id}
                     symbol={stock.symbol}
@@ -109,7 +117,7 @@ const Index = () => {
             <TabsContent value="long-term" className="space-y-4">
               <p className="text-muted-foreground">Companies with robust fundamentals and growth strategies</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recommendations?.filter(rec => rec.long_term_analysis)?.map((stock) => (
+                {recommendations?.map((stock) => (
                   <RecommendationCard
                     key={stock.id}
                     symbol={stock.symbol}
