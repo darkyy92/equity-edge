@@ -8,7 +8,7 @@ import {
   AlertCircleIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Tooltip } from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface RecommendationCardProps {
   symbol: string;
@@ -157,11 +157,18 @@ const RecommendationCard = ({
               <AlertCircleIcon className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium">Growth Potential</span>
             </div>
-            <Tooltip content="Estimated growth based on current analysis">
-              <span className={`text-sm font-semibold ${growthPotential >= 0 ? 'text-success' : 'text-error'}`}>
-                {growthPotential >= 0 ? '+' : ''}{growthPotential}%
-              </span>
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <span className={`text-sm font-semibold ${growthPotential >= 0 ? 'text-success' : 'text-error'}`}>
+                    {growthPotential >= 0 ? '+' : ''}{growthPotential}%
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Estimated growth based on current analysis</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <p className="text-sm text-muted-foreground">{reason}</p>
         </div>
