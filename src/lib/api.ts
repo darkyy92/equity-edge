@@ -10,7 +10,6 @@ const fetchWithCORS = async (url: string, options: RequestInit = {}) => {
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
     },
     ...options,
   };
@@ -83,7 +82,7 @@ export const getDailyPrices = async (symbol: string, timeRange: string = "1W"): 
     const multiplier = timeRange === "1D" ? 5 : 1;
     const timespan = timeRange === "1D" ? "minute" : "day";
     
-    const response = await fetch(
+    const response = await fetchWithCORS(
       `${BASE_URL}/v2/aggs/ticker/${symbol}/range/${multiplier}/${timespan}/${startDate}/${endDate}?adjusted=true&sort=asc&apiKey=${POLYGON_API_KEY}`
     );
     
