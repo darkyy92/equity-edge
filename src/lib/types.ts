@@ -5,6 +5,12 @@ export interface MarketStatus {
   currencies: Record<string, string>;
 }
 
+export interface AIRecommendation {
+  timeframe: 'short' | 'medium' | 'long';
+  potentialGrowth: number;
+  confidence: number;
+}
+
 export interface StockTicker {
   ticker: string;
   name: string;
@@ -23,6 +29,7 @@ export interface StockTicker {
   changePercent?: number;
   volume?: number;
   vwap?: number;
+  aiRecommendation?: AIRecommendation;
 }
 
 export interface StockRecommendation {

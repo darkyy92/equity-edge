@@ -10,6 +10,7 @@ import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
 import { getTopStocks } from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
+import { StockTicker } from "@/lib/types";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
@@ -19,26 +20,26 @@ const Index = () => {
   const { data: stockData, isLoading: isLoadingStocks } = useQuery({
     queryKey: ['stockData', activeTab],
     queryFn: () => getTopStocks(activeTab.split('-')[0] as 'short' | 'medium' | 'long'),
-    staleTime: 15 * 60 * 1000, // Consider data fresh for 15 minutes
-    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
+    staleTime: 15 * 60 * 1000,
+    refetchInterval: 15 * 60 * 1000,
     meta: {
-      onSuccess: async (data: any) => {
+      onSuccess: async (data: StockTicker[]) => {
         if (!data?.length) return;
 
         try {
           const recommendations = data.map(stock => ({
             symbol: stock.ticker,
-            short_term_analysis: stock.aiRecommendation.timeframe === 'short' ? {
+            short_term_analysis: stock.aiRecommendation?.timeframe === 'short' ? {
               potentialGrowth: stock.aiRecommendation.potentialGrowth,
               confidence: stock.aiRecommendation.confidence,
               timeframe: "short",
             } : null,
-            medium_term_analysis: stock.aiRecommendation.timeframe === 'medium' ? {
+            medium_term_analysis: stock.aiRecommendation?.timeframe === 'medium' ? {
               potentialGrowth: stock.aiRecommendation.potentialGrowth,
               confidence: stock.aiRecommendation.confidence,
               timeframe: "medium",
             } : null,
-            long_term_analysis: stock.aiRecommendation.timeframe === 'long' ? {
+            long_term_analysis: stock.aiRecommendation?.timeframe === 'long' ? {
               potentialGrowth: stock.aiRecommendation.potentialGrowth,
               confidence: stock.aiRecommendation.confidence,
               timeframe: "long",
@@ -122,15 +123,15 @@ const Index = () => {
                         key={stock.ticker}
                         symbol={stock.ticker}
                         name={stock.name}
-                        recommendation={stock.aiRecommendation.potentialGrowth >= 0 ? "Buy" : "Sell"}
-                        confidence={stock.aiRecommendation.confidence}
+                        recommendation={stock.aiRecommendation?.potentialGrowth >= 0 ? "Buy" : "Sell"}
+                        confidence={stock.aiRecommendation?.confidence ?? 75}
                         reason={`Based on ${stock.name}'s recent performance and market analysis for ${term.split('-')[0]} term growth`}
-                        price={stock.price}
-                        change={stock.change}
-                        changePercent={stock.changePercent}
-                        volume={stock.volume}
-                        vwap={stock.vwap}
-                        growthPotential={stock.aiRecommendation.potentialGrowth}
+                        price={stock.price ?? 0}
+                        change={stock.change ?? 0}
+                        changePercent={stock.changePercent ?? 0}
+                        volume={stock.volume ?? 0}
+                        vwap={stock.vwap ?? 0}
+                        growthPotential={stock.aiRecommendation?.potentialGrowth ?? 0}
                         timeframe={term.split('-')[0]}
                       />
                     ))}
