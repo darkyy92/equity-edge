@@ -38,29 +38,38 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {recommendations.map((stock) => (
-        <RecommendationCard
-          key={stock.symbol}
-          symbol={stock.symbol}
-          name={stock.name}
-          recommendation={stock.aiRecommendation?.potentialGrowth >= 0 ? "Buy" : "Sell"}
-          confidence={stock.aiRecommendation?.confidence ?? 75}
-          reason={stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
-          price={stock.price ?? 0}
-          change={stock.change ?? 0}
-          changePercent={stock.changePercent ?? 0}
-          volume={stock.volume ?? 0}
-          vwap={stock.vwap ?? 0}
-          growthPotential={stock.aiRecommendation?.potentialGrowth ?? 0}
-          timeframe={timeframe.split('-')[0]}
-          isin={stock.isin}
-          valorNumber={stock.valor_number}
-          fundamentalMetrics={stock.fundamentalMetrics}
-          technicalSignals={stock.technicalSignals}
-          marketContext={stock.marketContext}
-          primaryDrivers={stock.primaryDrivers || []}
-        />
-      ))}
+      {recommendations.map((stock) => {
+        // Get the correct timeframe analysis based on current tab
+        const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
+        const analysis = stock[timeframeKey as keyof StockTicker] as any;
+        
+        // Extract growth potential from the correct timeframe analysis
+        const growthPotential = analysis?.potentialGrowth ?? 0;
+
+        return (
+          <RecommendationCard
+            key={stock.symbol}
+            symbol={stock.symbol}
+            name={stock.name}
+            recommendation={growthPotential >= 0 ? "Buy" : "Sell"}
+            confidence={stock.aiRecommendation?.confidence ?? 75}
+            reason={stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
+            price={stock.price ?? 0}
+            change={stock.change ?? 0}
+            changePercent={stock.changePercent ?? 0}
+            volume={stock.volume ?? 0}
+            vwap={stock.vwap ?? 0}
+            growthPotential={growthPotential}
+            timeframe={timeframe.split('-')[0]}
+            isin={stock.isin}
+            valorNumber={stock.valor_number}
+            fundamentalMetrics={stock.fundamentalMetrics}
+            technicalSignals={stock.technicalSignals}
+            marketContext={stock.marketContext}
+            primaryDrivers={stock.primaryDrivers || []}
+          />
+        );
+      })}
     </div>
   );
 };
