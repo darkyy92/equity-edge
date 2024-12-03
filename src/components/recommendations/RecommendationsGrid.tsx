@@ -41,11 +41,13 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
       {recommendations.map((stock) => {
         // Get the correct timeframe analysis based on current tab
         const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
-        const analysis = stock[timeframeKey as keyof StockTicker] as any;
         
-        // Extract growth potential and reason from the analysis
+        // Extract the analysis object from the stock data
+        const analysis = stock[timeframeKey as keyof typeof stock];
+        
+        // Safely extract growth potential and reason from the analysis object
         const growthPotential = analysis?.potentialGrowth ?? 0;
-        const reason = analysis?.reason || stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`;
+        const reason = analysis?.reason || `Based on ${stock.name}'s recent performance and market analysis`;
 
         return (
           <RecommendationCard
