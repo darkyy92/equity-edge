@@ -1,7 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,7 +21,7 @@ serve(async (req) => {
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -106,7 +105,11 @@ serve(async (req) => {
             confidence_metrics: {
               confidence: rec.confidence
             },
-            [`${timeframe}_term_analysis`]: timeframeAnalysis
+            [`${timeframe}_term_analysis`]: timeframeAnalysis,
+            fundamental_metrics: null,
+            technical_signals: null,
+            market_context: null,
+            primary_drivers: []
           };
         } catch (error) {
           console.error(`Error processing ${rec.symbol}:`, error);
