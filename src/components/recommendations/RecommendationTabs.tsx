@@ -2,6 +2,10 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecommendationsGrid from "./RecommendationsGrid";
 import { StockTicker } from "@/lib/types/stock";
+import { Button } from "@/components/ui/button";
+import { RefreshCwIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
@@ -29,15 +33,45 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
   recommendations,
   isLoading
 }) => {
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['recommendations'] });
+      toast({
+        title: "Refreshing data",
+        description: "Fetching fresh stock and AI recommendations...",
+      });
+    } catch (error) {
+      toast({
+        title: "Error refreshing data",
+        description: "Failed to refresh recommendations. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Tabs defaultValue="short-term" className="w-full" onValueChange={(value) => setActiveTab(value as TimeFrame)}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Investment Recommendations</h2>
-        <TabsList>
-          <TabsTrigger value="short-term">Short Term</TabsTrigger>
-          <TabsTrigger value="medium-term">Medium Term</TabsTrigger>
-          <TabsTrigger value="long-term">Long Term</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="gap-2"
+            disabled={isLoading}
+          >
+            <RefreshCwIcon className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </Button>
+          <TabsList>
+            <TabsTrigger value="short-term">Short Term</TabsTrigger>
+            <TabsTrigger value="medium-term">Medium Term</TabsTrigger>
+            <TabsTrigger value="long-term">Long Term</TabsTrigger>
+          </TabsList>
+        </div>
       </div>
 
       {['short-term', 'medium-term', 'long-term'].map((term) => (
