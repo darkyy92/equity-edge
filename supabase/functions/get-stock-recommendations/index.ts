@@ -10,7 +10,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -32,11 +31,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a financial analyst. Return a JSON array of objects, each containing: symbol (stock ticker), reason (brief explanation), confidence (0-100), potentialGrowth (-100 to 100). Format your entire response as valid JSON.'
+            content: `You are a financial analyst. Provide recommendations for ${timeframe}-term investment opportunities. Format your response as a JSON object with a 'recommendations' array containing objects with these exact fields: symbol (stock ticker), reason (brief explanation), confidence (number between 0-100), potentialGrowth (number between -100 and 100).`
           },
           {
             role: 'user',
-            content: `Recommend 9 stocks for ${timeframe}-term investment. Return ONLY a JSON array.`
+            content: 'Generate 9 stock recommendations. Return ONLY a JSON object with a recommendations array.'
           }
         ],
         response_format: { type: "json_object" },
@@ -55,12 +54,19 @@ serve(async (req) => {
       throw new Error('Invalid AI response format');
     }
 
-    const recommendations = JSON.parse(aiData.choices[0].message.content);
+    const parsedResponse = JSON.parse(aiData.choices[0].message.content);
+    const recommendations = parsedResponse.recommendations;
+    
+    if (!Array.isArray(recommendations)) {
+      console.error('Invalid recommendations format:', parsedResponse);
+      throw new Error('Invalid recommendations format');
+    }
+
     console.log('Got AI recommendations:', recommendations);
 
     // 2. Fetch stock details from Polygon
     const enrichedRecommendations = await Promise.all(
-      recommendations.stocks.map(async (rec: any) => {
+      recommendations.map(async (rec: any) => {
         try {
           console.log('Fetching Polygon data for:', rec.symbol);
           const [detailsResponse, priceResponse] = await Promise.all([
@@ -92,6 +98,9 @@ serve(async (req) => {
             changePercent: ((price.results[0].c - price.results[0].o) / price.results[0].o) * 100,
             volume: price.results[0].v,
             vwap: price.results[0].vw,
+            confidence_metrics: {
+              confidence: rec.confidence
+            }
           };
         } catch (error) {
           console.error(`Error processing ${rec.symbol}:`, error);
