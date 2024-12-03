@@ -1,5 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,7 +23,7 @@ serve(async (req) => {
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -88,8 +90,9 @@ serve(async (req) => {
 
           // Store the growth potential in the timeframe-specific analysis
           const timeframeAnalysis = {
-            potentialGrowth: rec.potentialGrowth,
-            timeframe
+            potentialGrowth: rec.potentialGrowth || 0, // Ensure we have a default value
+            timeframe,
+            confidence: rec.confidence || 75 // Default confidence if not provided
           };
 
           return {
@@ -103,9 +106,9 @@ serve(async (req) => {
             volume: price.results[0].v,
             vwap: price.results[0].vw,
             confidence_metrics: {
-              confidence: rec.confidence
+              confidence: rec.confidence || 75
             },
-            [`${timeframe}_term_analysis`]: timeframeAnalysis,
+            [`${timeframe}_term_analysis`]: timeframeAnalysis, // This ensures the growth potential is stored correctly
             fundamental_metrics: null,
             technical_signals: null,
             market_context: null,
