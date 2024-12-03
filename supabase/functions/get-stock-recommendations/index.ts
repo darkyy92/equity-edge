@@ -124,8 +124,10 @@ serve(async (req) => {
 
     console.log('Enriched recommendations:', enrichedRecommendations);
 
-    // Filter out recommendations with errors
-    const validRecommendations = enrichedRecommendations.filter((rec: any) => !rec.error);
+    // Filter to ensure exactly 6 recommendations
+    const validRecommendations = enrichedRecommendations
+      .filter((rec: any) => !rec.error)
+      .slice(0, 6);
     
     if (validRecommendations.length === 0) {
       throw new Error('No valid stock recommendations could be generated');
