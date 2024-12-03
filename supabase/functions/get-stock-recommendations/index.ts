@@ -33,7 +33,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: 'Generate 9 stock recommendations. Return ONLY a JSON object with a recommendations array.'
+            content: 'Generate 6 stock recommendations. Return ONLY a JSON object with a recommendations array.'
           }
         ],
         response_format: { type: "json_object" },
