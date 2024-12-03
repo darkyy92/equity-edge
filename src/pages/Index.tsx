@@ -13,11 +13,28 @@ import { StockTicker } from "@/lib/types/stock";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
+interface StockRecommendation {
+  symbol: string;
+  name?: string;
+  confidence_metrics: { confidence: number } | null;
+  explanation: string | null;
+  fundamental_metrics: any;
+  technical_signals: any;
+  market_context: any;
+  primary_drivers: string[] | null;
+  price?: number;
+  change?: number;
+  changePercent?: number;
+  volume?: number;
+  vwap?: number;
+  isin?: string;
+  valor_number?: string;
+}
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
   const queryClient = useQueryClient();
 
-  // Pre-fetch data for other tabs in the background
   const prefetchOtherTabs = async (currentTab: TimeFrame) => {
     const otherTabs: TimeFrame[] = ["short-term", "medium-term", "long-term"].filter(
       (tab) => tab !== currentTab
@@ -31,7 +48,39 @@ const Index = () => {
     }
   };
 
-  // Separate the fetch logic for better organization and reusability
+  const transformToStockTicker = (recommendation: StockRecommendation): StockTicker => ({
+    ticker: recommendation.symbol,
+    symbol: recommendation.symbol,
+    name: recommendation.name || recommendation.symbol,
+    market: 'US',
+    locale: 'us',
+    primary_exchange: 'NYSE',
+    type: 'CS',
+    active: true,
+    currency_name: 'USD',
+    cik: '',
+    composite_figi: '',
+    share_class_figi: '',
+    last_updated_utc: new Date().toISOString(),
+    price: recommendation.price,
+    change: recommendation.change,
+    changePercent: recommendation.changePercent,
+    volume: recommendation.volume,
+    vwap: recommendation.vwap,
+    isin: recommendation.isin,
+    valor_number: recommendation.valor_number,
+    fundamentalMetrics: recommendation.fundamental_metrics,
+    technicalSignals: recommendation.technical_signals,
+    marketContext: recommendation.market_context,
+    primaryDrivers: recommendation.primary_drivers,
+    aiRecommendation: {
+      timeframe: activeTab.split('-')[0] as 'short' | 'medium' | 'long',
+      potentialGrowth: 0,
+      confidence: recommendation.confidence_metrics?.confidence ?? 75,
+      explanation: recommendation.explanation || undefined
+    }
+  });
+
   const fetchRecommendations = async (timeframe: string) => {
     const { data: cachedRecommendations, error: dbError } = await supabase
       .from('stock_recommendations')
@@ -42,37 +91,32 @@ const Index = () => {
 
     if (dbError) throw dbError;
 
-    // If we have cached recommendations, return them immediately
     if (cachedRecommendations && cachedRecommendations.length > 0) {
-      return cachedRecommendations;
+      return cachedRecommendations.map(transformToStockTicker);
     }
 
-    // Only fetch new data if cache is empty
     const response = await supabase.functions.invoke('get-stock-recommendations', {
       body: { timeframe: timeframe.split('-')[0] }
     });
 
     if (response.error) throw response.error;
-    return response.data.recommendations as StockTicker[];
+    return (response.data.recommendations as StockRecommendation[]).map(transformToStockTicker);
   };
 
-  // Main query with optimized caching
   const { data: recommendations, isLoading, error } = useQuery<StockTicker[]>({
     queryKey: ['recommendations', activeTab],
     queryFn: () => fetchRecommendations(activeTab),
-    staleTime: 15 * 60 * 1000,      // Data stays fresh for 15 minutes
-    gcTime: 30 * 60 * 1000,         // Keep unused data in cache for 30 minutes
-    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
-    refetchOnWindowFocus: false,     // Don't refetch on window focus
-    refetchOnMount: false,           // Don't refetch on component mount if data exists
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchInterval: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     initialData: () => {
-      // Try to get data from cache first
       const cachedData = queryClient.getQueryData(['recommendations', activeTab]) as StockTicker[] | undefined;
       return cachedData;
     },
   });
 
-  // Prefetch other tabs when the active tab changes
   useEffect(() => {
     prefetchOtherTabs(activeTab);
   }, [activeTab]);
@@ -127,27 +171,27 @@ const Index = () => {
                   </div>
                 ) : recommendations && recommendations.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recommendations.map((stock: StockTicker) => (
+                    {recommendations.map((stock) => (
                       <RecommendationCard
                         key={stock.symbol}
                         symbol={stock.symbol}
-                        name={stock.name || stock.symbol}
-                        recommendation={stock.potentialGrowth >= 0 ? "Buy" : "Sell"}
-                        confidence={stock.confidence_metrics?.confidence ?? 75}
-                        reason={stock.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
+                        name={stock.name}
+                        recommendation={stock.aiRecommendation?.potentialGrowth >= 0 ? "Buy" : "Sell"}
+                        confidence={stock.aiRecommendation?.confidence ?? 75}
+                        reason={stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
                         price={stock.price ?? 0}
                         change={stock.change ?? 0}
                         changePercent={stock.changePercent ?? 0}
                         volume={stock.volume ?? 0}
                         vwap={stock.vwap ?? 0}
-                        growthPotential={stock[`${term.split('-')[0]}_term_analysis`]?.potentialGrowth ?? 0}
+                        growthPotential={stock.aiRecommendation?.potentialGrowth ?? 0}
                         timeframe={term.split('-')[0]}
                         isin={stock.isin}
                         valorNumber={stock.valor_number}
-                        fundamentalMetrics={stock.fundamental_metrics}
-                        technicalSignals={stock.technical_signals}
-                        marketContext={stock.market_context}
-                        primaryDrivers={stock.primary_drivers || []}
+                        fundamentalMetrics={stock.fundamentalMetrics}
+                        technicalSignals={stock.technicalSignals}
+                        marketContext={stock.marketContext}
+                        primaryDrivers={stock.primaryDrivers || []}
                       />
                     ))}
                   </div>
