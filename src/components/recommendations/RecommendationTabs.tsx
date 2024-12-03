@@ -36,11 +36,27 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
   const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
+    const toastId = toast({
+      title: "Refreshing data",
+      description: "Fetching fresh stock and AI recommendations...",
+    });
+
     try {
-      await queryClient.invalidateQueries({ queryKey: ['recommendations'] });
+      await queryClient.invalidateQueries({ 
+        queryKey: ['recommendations'],
+        refetchType: 'active',
+      });
+      
+      // Wait for the refetch to complete
+      await queryClient.refetchQueries({ 
+        queryKey: ['recommendations'],
+        type: 'active',
+      });
+
       toast({
-        title: "Refreshing data",
-        description: "Fetching fresh stock and AI recommendations...",
+        title: "Data refreshed",
+        description: "Successfully updated stock recommendations with fresh data.",
+        variant: "default",
       });
     } catch (error) {
       toast({

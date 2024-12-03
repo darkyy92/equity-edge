@@ -9,7 +9,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,7 +17,6 @@ serve(async (req) => {
     console.log('Starting get-stock-recommendations function');
     const { timeframe = 'short' } = await req.json();
 
-    // 1. Get AI recommendations
     console.log('Fetching AI recommendations for timeframe:', timeframe);
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -31,11 +29,16 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial analyst. Provide recommendations for ${timeframe}-term investment opportunities. Format your response as a JSON object with a 'recommendations' array containing objects with these exact fields: symbol (stock ticker), reason (brief explanation), confidence (number between 0-100), potentialGrowth (number between -25 and 25).`
+            content: `You are a financial analyst specializing in discovering both established and under-the-radar investment opportunities. Focus on a mix of:
+            1. Well-known, stable companies (30% of recommendations)
+            2. Mid-cap companies with strong growth potential (40% of recommendations)
+            3. Lesser-known small-cap companies with exceptional potential (30% of recommendations)
+            
+            For each recommendation, provide detailed reasoning focusing on unique competitive advantages, market opportunities, and growth catalysts.`
           },
           {
             role: 'user',
-            content: 'Generate 6 stock recommendations. Return ONLY a JSON object with a recommendations array.'
+            content: `Generate 6 diverse stock recommendations for ${timeframe}-term investment, including both established and promising lesser-known companies. Include specific growth catalysts and unique opportunities. Return ONLY a JSON object with a recommendations array containing objects with these exact fields: symbol (stock ticker), reason (brief explanation), confidence (number between 0-100), potentialGrowth (number between -25 and 25).`
           }
         ],
         response_format: { type: "json_object" },
@@ -146,15 +149,12 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in get-stock-recommendations function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Failed to get stock recommendations',
-        details: error.message 
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ 
+      error: 'Failed to get stock recommendations',
+      details: error.message 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
