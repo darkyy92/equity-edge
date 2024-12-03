@@ -52,9 +52,9 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
         // Extract the analysis object from the stock data and type it correctly
         const analysis = stock[timeframeKey as keyof typeof stock] as TimeframeAnalysis | undefined;
         
-        // Safely extract growth potential and reason from the analysis object
+        // Use the actual AI-provided growth potential and reason
         const growthPotential = analysis?.potentialGrowth ?? 0;
-        const reason = analysis?.reason || `Based on ${stock.name}'s recent performance and market analysis`;
+        const reason = analysis?.reason ?? "Analysis not available";
 
         return (
           <RecommendationCard
@@ -62,7 +62,7 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
             symbol={stock.symbol}
             name={stock.name}
             recommendation={growthPotential >= 0 ? "Buy" : "Sell"}
-            confidence={stock.aiRecommendation?.confidence ?? 75}
+            confidence={analysis?.confidence ?? 75}
             reason={reason}
             price={stock.price ?? 0}
             change={stock.change ?? 0}
