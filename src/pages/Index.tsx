@@ -62,7 +62,7 @@ const Index = () => {
     aiAnalysis: {
       potentialGrowth: recommendation[`${activeTab.split('-')[0]}_term_analysis`]?.potentialGrowth || 0,
       confidence: recommendation.confidence_metrics?.confidence || 75,
-      reason: recommendation.explanation || 'Analysis not available',
+      reason: recommendation.explanation || 'No analysis available at this time',
       primaryDrivers: recommendation.primary_drivers || []
     }
   });
