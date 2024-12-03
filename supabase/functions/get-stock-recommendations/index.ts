@@ -42,7 +42,7 @@ serve(async (req) => {
             - symbol (stock ticker)
             - reason (brief explanation)
             - confidence (number between 0-100)
-            - potentialGrowth (number between -25 and 25)
+            - potentialGrowth (number representing expected percentage growth, can be any positive or negative value)
             - primaryDrivers (array of strings, 3-5 key growth catalysts)`
           }
         ],
