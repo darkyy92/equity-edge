@@ -59,11 +59,11 @@ const Index = () => {
     technicalSignals: recommendation.technical_signals as TechnicalSignals | undefined,
     marketContext: recommendation.market_context as MarketContext | undefined,
     primaryDrivers: recommendation.primary_drivers || [],
-    aiRecommendation: {
-      timeframe: activeTab.split('-')[0] as 'short' | 'medium' | 'long',
-      potentialGrowth: 0,
-      confidence: recommendation.confidence_metrics?.confidence ?? 75,
-      explanation: recommendation.explanation || undefined
+    aiAnalysis: {
+      potentialGrowth: recommendation[`${activeTab.split('-')[0]}_term_analysis`]?.potentialGrowth || 0,
+      confidence: recommendation.confidence_metrics?.confidence || 75,
+      reason: recommendation.explanation || 'Analysis not available',
+      primaryDrivers: recommendation.primary_drivers || []
     }
   });
 
