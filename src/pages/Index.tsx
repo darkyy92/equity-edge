@@ -4,7 +4,7 @@ import SearchBar from "@/components/SearchBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { TrendingUpIcon } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,46 +14,67 @@ type TimeFrame = "short-term" | "medium-term" | "long-term";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
+  const queryClient = useQueryClient();
 
-  // Enhanced query configuration to better utilize caching
+  // Pre-fetch data for other tabs in the background
+  const prefetchOtherTabs = async (currentTab: TimeFrame) => {
+    const otherTabs: TimeFrame[] = ["short-term", "medium-term", "long-term"].filter(
+      (tab) => tab !== currentTab
+    ) as TimeFrame[];
+
+    for (const tab of otherTabs) {
+      await queryClient.prefetchQuery({
+        queryKey: ['recommendations', tab],
+        queryFn: () => fetchRecommendations(tab),
+      });
+    }
+  };
+
+  // Separate the fetch logic for better organization and reusability
+  const fetchRecommendations = async (timeframe: string) => {
+    const { data: cachedRecommendations, error: dbError } = await supabase
+      .from('stock_recommendations')
+      .select('*')
+      .eq('strategy_type', timeframe.split('-')[0])
+      .order('updated_at', { ascending: false })
+      .limit(9);
+
+    if (dbError) throw dbError;
+
+    // If we have cached recommendations, return them immediately
+    if (cachedRecommendations && cachedRecommendations.length > 0) {
+      return cachedRecommendations;
+    }
+
+    // Only fetch new data if cache is empty
+    const response = await supabase.functions.invoke('get-stock-recommendations', {
+      body: { timeframe: timeframe.split('-')[0] }
+    });
+
+    if (response.error) throw response.error;
+    return response.data.recommendations;
+  };
+
+  // Main query with optimized caching
   const { data: recommendations, isLoading, error } = useQuery({
     queryKey: ['recommendations', activeTab],
-    queryFn: async () => {
-      try {
-        const timeframe = activeTab.split('-')[0] as 'short' | 'medium' | 'long';
-        
-        // First try to get cached recommendations from Supabase
-        const { data: cachedRecommendations, error: dbError } = await supabase
-          .from('stock_recommendations')
-          .select('*')
-          .eq('strategy_type', timeframe)
-          .order('updated_at', { ascending: false })
-          .limit(9);
-
-        if (dbError) throw dbError;
-
-        // Return cached data if available
-        if (cachedRecommendations && cachedRecommendations.length > 0) {
-          return cachedRecommendations;
-        }
-
-        // Only fetch new data if cache is empty
-        const response = await supabase.functions.invoke('get-stock-recommendations', {
-          body: { timeframe }
-        });
-
-        if (response.error) throw response.error;
-        return response.data.recommendations;
-      } catch (error) {
-        console.error('Error fetching recommendations:', error);
-        throw error;
-      }
-    },
-    // These settings will override the global defaults if needed
-    staleTime: 15 * 60 * 1000,      // Consider data fresh for 15 minutes
+    queryFn: () => fetchRecommendations(activeTab),
+    staleTime: 15 * 60 * 1000,      // Data stays fresh for 15 minutes
     gcTime: 30 * 60 * 1000,         // Keep unused data in cache for 30 minutes
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
+    refetchOnWindowFocus: false,     // Don't refetch on window focus
+    refetchOnMount: false,           // Don't refetch on component mount if data exists
+    initialData: () => {
+      // Try to get data from cache first
+      const cachedData = queryClient.getQueryData(['recommendations', activeTab]);
+      return cachedData || undefined;
+    },
   });
+
+  // Prefetch other tabs when the active tab changes
+  React.useEffect(() => {
+    prefetchOtherTabs(activeTab);
+  }, [activeTab]);
 
   if (error) {
     toast({
