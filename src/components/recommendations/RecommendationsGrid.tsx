@@ -43,8 +43,9 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
         const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
         const analysis = stock[timeframeKey as keyof StockTicker] as any;
         
-        // Extract growth potential from the correct timeframe analysis
+        // Extract growth potential and reason from the analysis
         const growthPotential = analysis?.potentialGrowth ?? 0;
+        const reason = analysis?.reason || stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`;
 
         return (
           <RecommendationCard
@@ -53,7 +54,7 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
             name={stock.name}
             recommendation={growthPotential >= 0 ? "Buy" : "Sell"}
             confidence={stock.aiRecommendation?.confidence ?? 75}
-            reason={stock.aiRecommendation?.explanation || `Based on ${stock.name}'s recent performance and market analysis`}
+            reason={reason}
             price={stock.price ?? 0}
             change={stock.change ?? 0}
             changePercent={stock.changePercent ?? 0}
