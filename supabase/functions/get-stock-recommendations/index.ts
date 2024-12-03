@@ -1,8 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const POLYGON_API_KEY = Deno.env.get('POLYGON_API_KEY');
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +22,7 @@ serve(async (req) => {
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -70,8 +69,8 @@ serve(async (req) => {
         try {
           console.log('Fetching Polygon data for:', rec.symbol);
           const [detailsResponse, priceResponse] = await Promise.all([
-            fetch(`https://api.polygon.io/v3/reference/tickers/${rec.symbol}?apiKey=${POLYGON_API_KEY}`),
-            fetch(`https://api.polygon.io/v2/aggs/ticker/${rec.symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`)
+            fetch(`https://api.polygon.io/v3/reference/tickers/${rec.symbol}?apiKey=${Deno.env.get('POLYGON_API_KEY')}`),
+            fetch(`https://api.polygon.io/v2/aggs/ticker/${rec.symbol}/prev?adjusted=true&apiKey=${Deno.env.get('POLYGON_API_KEY')}`)
           ]);
 
           if (!detailsResponse.ok || !priceResponse.ok) {
@@ -88,6 +87,12 @@ serve(async (req) => {
             throw new Error(`Invalid data format for ${rec.symbol}`);
           }
 
+          // Store the growth potential in the timeframe-specific analysis
+          const timeframeAnalysis = {
+            potentialGrowth: rec.potentialGrowth,
+            timeframe
+          };
+
           return {
             ...rec,
             name: details.results.name,
@@ -100,7 +105,8 @@ serve(async (req) => {
             vwap: price.results[0].vw,
             confidence_metrics: {
               confidence: rec.confidence
-            }
+            },
+            [`${timeframe}_term_analysis`]: timeframeAnalysis
           };
         } catch (error) {
           console.error(`Error processing ${rec.symbol}:`, error);
