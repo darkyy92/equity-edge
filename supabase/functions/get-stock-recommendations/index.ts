@@ -38,7 +38,12 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Generate 6 diverse stock recommendations for ${timeframe}-term investment, including both established and promising lesser-known companies. Include specific growth catalysts and unique opportunities. Return ONLY a JSON object with a recommendations array containing objects with these exact fields: symbol (stock ticker), reason (brief explanation), confidence (number between 0-100), potentialGrowth (number between -25 and 25).`
+            content: `Generate 6 diverse stock recommendations for ${timeframe}-term investment, including both established and promising lesser-known companies. Include specific growth catalysts and unique opportunities. Return ONLY a JSON object with a recommendations array containing objects with these exact fields: 
+            - symbol (stock ticker)
+            - reason (brief explanation)
+            - confidence (number between 0-100)
+            - potentialGrowth (number between -25 and 25)
+            - primaryDrivers (array of strings, 3-5 key growth catalysts)`
           }
         ],
         response_format: { type: "json_object" },
@@ -67,7 +72,6 @@ serve(async (req) => {
 
     console.log('Got AI recommendations:', recommendations);
 
-    // 2. Fetch stock details from Polygon
     const enrichedRecommendations = await Promise.all(
       recommendations.map(async (rec: any) => {
         try {
@@ -91,11 +95,11 @@ serve(async (req) => {
             throw new Error(`Invalid data format for ${rec.symbol}`);
           }
 
-          // Store the AI-provided growth potential directly in the timeframe analysis
           const timeframeAnalysis = {
-            potentialGrowth: rec.potentialGrowth,  // Use the AI-provided growth potential directly
+            potentialGrowth: rec.potentialGrowth,
             timeframe,
-            confidence: rec.confidence
+            confidence: rec.confidence,
+            reason: rec.reason
           };
 
           return {
@@ -115,7 +119,7 @@ serve(async (req) => {
             fundamental_metrics: null,
             technical_signals: null,
             market_context: null,
-            primary_drivers: []
+            primary_drivers: rec.primaryDrivers || []
           };
         } catch (error) {
           console.error(`Error processing ${rec.symbol}:`, error);
@@ -130,7 +134,6 @@ serve(async (req) => {
 
     console.log('Enriched recommendations:', enrichedRecommendations);
 
-    // Filter to ensure exactly 6 recommendations
     const validRecommendations = enrichedRecommendations
       .filter((rec: any) => !rec.error)
       .slice(0, 6);
