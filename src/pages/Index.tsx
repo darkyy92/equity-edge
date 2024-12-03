@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MarketOverview from "@/components/MarketOverview";
 import SearchBar from "@/components/SearchBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { StockTicker } from "@/lib/types/stock";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
@@ -52,11 +53,11 @@ const Index = () => {
     });
 
     if (response.error) throw response.error;
-    return response.data.recommendations;
+    return response.data.recommendations as StockTicker[];
   };
 
   // Main query with optimized caching
-  const { data: recommendations, isLoading, error } = useQuery({
+  const { data: recommendations, isLoading, error } = useQuery<StockTicker[]>({
     queryKey: ['recommendations', activeTab],
     queryFn: () => fetchRecommendations(activeTab),
     staleTime: 15 * 60 * 1000,      // Data stays fresh for 15 minutes
@@ -66,13 +67,13 @@ const Index = () => {
     refetchOnMount: false,           // Don't refetch on component mount if data exists
     initialData: () => {
       // Try to get data from cache first
-      const cachedData = queryClient.getQueryData(['recommendations', activeTab]);
-      return cachedData || undefined;
+      const cachedData = queryClient.getQueryData(['recommendations', activeTab]) as StockTicker[] | undefined;
+      return cachedData;
     },
   });
 
   // Prefetch other tabs when the active tab changes
-  React.useEffect(() => {
+  useEffect(() => {
     prefetchOtherTabs(activeTab);
   }, [activeTab]);
 
@@ -126,7 +127,7 @@ const Index = () => {
                   </div>
                 ) : recommendations && recommendations.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recommendations.map((stock: any) => (
+                    {recommendations.map((stock: StockTicker) => (
                       <RecommendationCard
                         key={stock.symbol}
                         symbol={stock.symbol}
