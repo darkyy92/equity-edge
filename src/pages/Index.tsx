@@ -15,6 +15,7 @@ type TimeFrame = "short-term" | "medium-term" | "long-term";
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
 
+  // Enhanced query configuration to better utilize caching
   const { data: recommendations, isLoading, error } = useQuery({
     queryKey: ['recommendations', activeTab],
     queryFn: async () => {
@@ -31,15 +32,12 @@ const Index = () => {
 
         if (dbError) throw dbError;
 
-        // If we have recent recommendations (less than 1 hour old), use them
+        // Return cached data if available
         if (cachedRecommendations && cachedRecommendations.length > 0) {
-          const mostRecent = new Date(cachedRecommendations[0].updated_at);
-          if (Date.now() - mostRecent.getTime() < 60 * 60 * 1000) {
-            return cachedRecommendations;
-          }
+          return cachedRecommendations;
         }
 
-        // Otherwise, get fresh recommendations from the edge function
+        // Only fetch new data if cache is empty
         const response = await supabase.functions.invoke('get-stock-recommendations', {
           body: { timeframe }
         });
@@ -51,7 +49,9 @@ const Index = () => {
         throw error;
       }
     },
-    staleTime: 15 * 60 * 1000, // Consider data stale after 15 minutes
+    // These settings will override the global defaults if needed
+    staleTime: 15 * 60 * 1000,      // Consider data fresh for 15 minutes
+    gcTime: 30 * 60 * 1000,         // Keep unused data in cache for 30 minutes
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
   });
 
