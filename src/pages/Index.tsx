@@ -68,6 +68,20 @@ const Index = () => {
   });
 
   const fetchRecommendations = async (timeframe: string): Promise<StockTicker[]> => {
+    const cacheKey = `recommendations-${timeframe}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    const cacheTimestamp = localStorage.getItem(`${cacheKey}-timestamp`);
+    
+    // Check if we have valid cached data (less than 15 minutes old)
+    if (cachedData && cacheTimestamp) {
+      const now = new Date().getTime();
+      const timestamp = parseInt(cacheTimestamp);
+      if (now - timestamp < 15 * 60 * 1000) {
+        return JSON.parse(cachedData);
+      }
+    }
+
+    // If no valid cache, fetch from Supabase
     const { data: cachedRecommendations, error: dbError } = await supabase
       .from('stock_recommendations')
       .select('*')
@@ -78,7 +92,15 @@ const Index = () => {
     if (dbError) throw dbError;
 
     if (cachedRecommendations && cachedRecommendations.length > 0) {
-      return cachedRecommendations.map(rec => transformToStockTicker(rec as unknown as StockRecommendation));
+      const transformedData = cachedRecommendations.map(rec => 
+        transformToStockTicker(rec as unknown as StockRecommendation)
+      );
+      
+      // Update local cache
+      localStorage.setItem(cacheKey, JSON.stringify(transformedData));
+      localStorage.setItem(`${cacheKey}-timestamp`, new Date().getTime().toString());
+      
+      return transformedData;
     }
 
     const response = await supabase.functions.invoke('get-stock-recommendations', {
@@ -86,21 +108,26 @@ const Index = () => {
     });
 
     if (response.error) throw response.error;
-    return (response.data.recommendations as StockRecommendation[]).map(transformToStockTicker);
+    
+    const transformedData = (response.data.recommendations as StockRecommendation[])
+      .map(transformToStockTicker);
+    
+    // Update local cache
+    localStorage.setItem(cacheKey, JSON.stringify(transformedData));
+    localStorage.setItem(`${cacheKey}-timestamp`, new Date().getTime().toString());
+    
+    return transformedData;
   };
 
   const { data: recommendations, isLoading, error } = useQuery({
     queryKey: ['recommendations', activeTab],
     queryFn: () => fetchRecommendations(activeTab),
-    staleTime: 15 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchInterval: 15 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // Data is fresh for 15 minutes
+    gcTime: 60 * 60 * 1000, // Keep unused data for 1 hour
+    retry: 1, // Only retry once on failure
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    initialData: () => {
-      const cachedData = queryClient.getQueryData(['recommendations', activeTab]) as StockTicker[] | undefined;
-      return cachedData;
-    },
+    refetchOnReconnect: false,
   });
 
   if (error) {
