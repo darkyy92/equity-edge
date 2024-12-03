@@ -7,13 +7,13 @@ import { StockTicker } from "@/lib/types/stock";
 
 interface TimeframeAnalysis {
   potentialGrowth: number;
-  reason?: string;
-  timeframe?: string;
-  confidence?: number;
+  reason: string;
+  confidence: number;
+  primaryDrivers: string[];
 }
 
 interface RecommendationsGridProps {
-  recommendations: StockTicker[] | undefined;
+  recommendations: (StockTicker & { aiAnalysis?: TimeframeAnalysis })[] | undefined;
   isLoading: boolean;
   timeframe: string;
 }
@@ -46,19 +46,19 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {recommendations.map((stock) => {
-        const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
-        const analysis = stock[timeframeKey as keyof typeof stock] as TimeframeAnalysis | undefined;
+        const analysis = stock.aiAnalysis;
         
-        const growthPotential = analysis?.potentialGrowth;
+        const growthPotential = analysis?.potentialGrowth ?? 0;
         const confidence = analysis?.confidence ?? 75;
         const reason = analysis?.reason ?? "Analysis not available";
+        const primaryDrivers = analysis?.primaryDrivers ?? [];
 
         return (
           <RecommendationCard
             key={stock.symbol}
             symbol={stock.symbol}
             name={stock.name}
-            recommendation={growthPotential && growthPotential >= 0 ? "Buy" : "Sell"}
+            recommendation={growthPotential >= 0 ? "Buy" : "Sell"}
             confidence={confidence}
             reason={reason}
             price={stock.price ?? 0}
@@ -66,14 +66,14 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
             changePercent={stock.changePercent ?? 0}
             volume={stock.volume ?? 0}
             vwap={stock.vwap ?? 0}
-            growthPotential={growthPotential ?? 0}
+            growthPotential={growthPotential}
             timeframe={timeframe.split('-')[0]}
             isin={stock.isin}
             valorNumber={stock.valor_number}
             fundamentalMetrics={stock.fundamentalMetrics}
             technicalSignals={stock.technicalSignals}
             marketContext={stock.marketContext}
-            primaryDrivers={stock.primaryDrivers || []}
+            primaryDrivers={primaryDrivers}
           />
         );
       })}
