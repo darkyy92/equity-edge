@@ -9,11 +9,16 @@ import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
 import StockAnalysis from "./pages/StockAnalysis";
 
+// Configure QueryClient with global defaults for caching
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60000,
-      gcTime: 300000,
+      staleTime: 15 * 60 * 1000, // Data considered fresh for 15 minutes
+      gcTime: 30 * 60 * 1000,    // Keep unused data in cache for 30 minutes
+      refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
+      refetchIntervalInBackground: true,
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnMount: false,       // Don't refetch on component mount if data is fresh
     },
   },
 });
