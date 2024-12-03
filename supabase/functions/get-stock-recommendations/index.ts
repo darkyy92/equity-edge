@@ -31,7 +31,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial analyst. Provide recommendations for ${timeframe}-term investment opportunities. Format your response as a JSON object with a 'recommendations' array containing objects with these exact fields: symbol (stock ticker), reason (brief explanation), confidence (number between 0-100), potentialGrowth (number between -100 and 100).`
+            content: `You are a financial analyst. Provide recommendations for ${timeframe}-term investment opportunities. Format your response as a JSON object with a 'recommendations' array containing objects with these exact fields: symbol (stock ticker), reason (brief explanation), confidence (number between 0-100), potentialGrowth (number between -25 and 25).`
           },
           {
             role: 'user',
@@ -88,15 +88,11 @@ serve(async (req) => {
             throw new Error(`Invalid data format for ${rec.symbol}`);
           }
 
-          // Ensure we have a valid growth potential value
-          const growthPotential = typeof rec.potentialGrowth === 'number' ? rec.potentialGrowth : 
-            (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 20 + 5); // Generate random growth between -25% and +25% if none provided
-
-          // Store the growth potential in the timeframe-specific analysis
+          // Store the AI-provided growth potential directly in the timeframe analysis
           const timeframeAnalysis = {
-            potentialGrowth: growthPotential,
+            potentialGrowth: rec.potentialGrowth,  // Use the AI-provided growth potential directly
             timeframe,
-            confidence: rec.confidence || 75
+            confidence: rec.confidence
           };
 
           return {
@@ -110,7 +106,7 @@ serve(async (req) => {
             volume: price.results[0].v,
             vwap: price.results[0].vw,
             confidence_metrics: {
-              confidence: rec.confidence || 75
+              confidence: rec.confidence
             },
             [`${timeframe}_term_analysis`]: timeframeAnalysis,
             fundamental_metrics: null,
