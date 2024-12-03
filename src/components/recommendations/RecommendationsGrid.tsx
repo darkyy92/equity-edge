@@ -5,6 +5,13 @@ import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
 import { StockTicker } from "@/lib/types/stock";
 
+interface TimeframeAnalysis {
+  potentialGrowth: number;
+  reason?: string;
+  timeframe?: string;
+  confidence?: number;
+}
+
 interface RecommendationsGridProps {
   recommendations: StockTicker[] | undefined;
   isLoading: boolean;
@@ -42,8 +49,8 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
         // Get the correct timeframe analysis based on current tab
         const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
         
-        // Extract the analysis object from the stock data
-        const analysis = stock[timeframeKey as keyof typeof stock];
+        // Extract the analysis object from the stock data and type it correctly
+        const analysis = stock[timeframeKey as keyof typeof stock] as TimeframeAnalysis | undefined;
         
         // Safely extract growth potential and reason from the analysis object
         const growthPotential = analysis?.potentialGrowth ?? 0;
