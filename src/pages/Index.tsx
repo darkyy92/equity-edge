@@ -10,17 +10,20 @@ import RecommendationCard from "@/components/RecommendationCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { StockTicker } from "@/lib/types/stock";
+import { Json } from "@/integrations/supabase/types";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
 interface StockRecommendation {
   symbol: string;
   name?: string;
-  confidence_metrics: { confidence: number } | null;
+  confidence_metrics: {
+    confidence: number;
+  } | null;
   explanation: string | null;
-  fundamental_metrics: any;
-  technical_signals: any;
-  market_context: any;
+  fundamental_metrics: Json | null;
+  technical_signals: Json | null;
+  market_context: Json | null;
   primary_drivers: string[] | null;
   price?: number;
   change?: number;
@@ -81,7 +84,7 @@ const Index = () => {
     }
   });
 
-  const fetchRecommendations = async (timeframe: string) => {
+  const fetchRecommendations = async (timeframe: string): Promise<StockTicker[]> => {
     const { data: cachedRecommendations, error: dbError } = await supabase
       .from('stock_recommendations')
       .select('*')
@@ -92,7 +95,7 @@ const Index = () => {
     if (dbError) throw dbError;
 
     if (cachedRecommendations && cachedRecommendations.length > 0) {
-      return cachedRecommendations.map(transformToStockTicker);
+      return cachedRecommendations.map(rec => transformToStockTicker(rec as unknown as StockRecommendation));
     }
 
     const response = await supabase.functions.invoke('get-stock-recommendations', {
