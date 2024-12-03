@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React from "react";
 import MarketOverview from "@/components/MarketOverview";
 import SearchBar from "@/components/SearchBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +9,7 @@ import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { StockTicker } from "@/lib/types/stock";
+import { StockTicker, FundamentalMetrics, TechnicalSignals, MarketContext } from "@/lib/types/stock";
 import { Json } from "@/integrations/supabase/types";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
@@ -38,19 +38,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
   const queryClient = useQueryClient();
 
-  const prefetchOtherTabs = async (currentTab: TimeFrame) => {
-    const otherTabs: TimeFrame[] = ["short-term", "medium-term", "long-term"].filter(
-      (tab) => tab !== currentTab
-    ) as TimeFrame[];
-
-    for (const tab of otherTabs) {
-      await queryClient.prefetchQuery({
-        queryKey: ['recommendations', tab],
-        queryFn: () => fetchRecommendations(tab),
-      });
-    }
-  };
-
   const transformToStockTicker = (recommendation: StockRecommendation): StockTicker => ({
     ticker: recommendation.symbol,
     symbol: recommendation.symbol,
@@ -72,10 +59,10 @@ const Index = () => {
     vwap: recommendation.vwap,
     isin: recommendation.isin,
     valor_number: recommendation.valor_number,
-    fundamentalMetrics: recommendation.fundamental_metrics,
-    technicalSignals: recommendation.technical_signals,
-    marketContext: recommendation.market_context,
-    primaryDrivers: recommendation.primary_drivers,
+    fundamentalMetrics: recommendation.fundamental_metrics as FundamentalMetrics | undefined,
+    technicalSignals: recommendation.technical_signals as TechnicalSignals | undefined,
+    marketContext: recommendation.market_context as MarketContext | undefined,
+    primaryDrivers: recommendation.primary_drivers || [],
     aiRecommendation: {
       timeframe: activeTab.split('-')[0] as 'short' | 'medium' | 'long',
       potentialGrowth: 0,
@@ -83,6 +70,19 @@ const Index = () => {
       explanation: recommendation.explanation || undefined
     }
   });
+
+  const prefetchOtherTabs = async (currentTab: TimeFrame) => {
+    const otherTabs: TimeFrame[] = ["short-term", "medium-term", "long-term"].filter(
+      (tab) => tab !== currentTab
+    ) as TimeFrame[];
+
+    for (const tab of otherTabs) {
+      await queryClient.prefetchQuery({
+        queryKey: ['recommendations', tab],
+        queryFn: () => fetchRecommendations(tab),
+      });
+    }
+  };
 
   const fetchRecommendations = async (timeframe: string): Promise<StockTicker[]> => {
     const { data: cachedRecommendations, error: dbError } = await supabase
