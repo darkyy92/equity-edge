@@ -28,6 +28,13 @@ export interface MarketContext {
   industryPosition?: string;
 }
 
+export interface TimeframeAnalysis {
+  potentialGrowth: number;
+  reason: string;
+  confidence: number;
+  primaryDrivers: string[];
+}
+
 export interface AIRecommendation {
   timeframe: 'short' | 'medium' | 'long';
   potentialGrowth: number;
@@ -41,7 +48,7 @@ export interface AIRecommendation {
 
 export interface StockTicker {
   ticker: string;
-  symbol: string; // Added for compatibility with database
+  symbol: string;
   name: string;
   market: string;
   locale: string;
@@ -65,4 +72,5 @@ export interface StockTicker {
   marketContext?: MarketContext;
   primaryDrivers?: string[];
   aiRecommendation?: AIRecommendation;
+  aiAnalysis?: TimeframeAnalysis;  // Added this line to fix the type error
 }
