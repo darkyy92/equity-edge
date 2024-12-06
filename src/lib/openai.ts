@@ -2,6 +2,13 @@ import { toast } from "@/components/ui/use-toast";
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
+export interface AIAnalysisResponse {
+  strategy?: string;
+  technical?: string;
+  market?: string;
+  risks?: string;
+}
+
 interface OpenAIResponse {
   strategy?: string;
   technical?: string;
@@ -86,7 +93,7 @@ const request = async (messages: any[]): Promise<any> => {
   });
 };
 
-export const getAIAnalysis = async (symbol: string, priceData: any): Promise<OpenAIResponse | null> => {
+export const getAIAnalysis = async (symbol: string, priceData: any): Promise<AIAnalysisResponse | null> => {
   const messages = [
     {
       role: 'system',
