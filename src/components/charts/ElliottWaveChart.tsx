@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { WaveAnalysis } from "@/utils/elliottWaveAnalysis";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 
 interface ElliottWaveChartProps {
   data: any[];
@@ -13,8 +13,16 @@ interface ElliottWaveChartProps {
 
 const formatDate = (dateStr: string | number) => {
   try {
+    if (typeof dateStr === 'string') {
+      const parsedDate = parseISO(dateStr);
+      if (!isValid(parsedDate)) {
+        console.error('Invalid date:', dateStr);
+        return '';
+      }
+      return format(parsedDate, "MMM d, yyyy");
+    }
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
+    if (!isValid(date)) {
       console.error('Invalid date:', dateStr);
       return '';
     }
@@ -54,17 +62,8 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => {
-            try {
-              const date = new Date(value);
-              if (isNaN(date.getTime())) {
-                console.error('Invalid date for X-axis:', value);
-                return '';
-              }
-              return format(date, "MMM d");
-            } catch (error) {
-              console.error('Error formatting X-axis date:', error);
-              return '';
-            }
+            const formattedDate = formatDate(value);
+            return formattedDate ? format(parseISO(formattedDate), "MMM d") : '';
           }}
         />
         <YAxis 
@@ -83,8 +82,7 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           strokeWidth={2}
         />
         
-        {/* Support Levels */}
-        {analysis?.supportLevels.map((level, index) => (
+        {analysis?.supportLevels?.map((level, index) => (
           <ReferenceLine 
             key={`support-${index}`}
             y={level}
@@ -94,8 +92,7 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           />
         ))}
 
-        {/* Resistance Levels */}
-        {analysis?.resistanceLevels.map((level, index) => (
+        {analysis?.resistanceLevels?.map((level, index) => (
           <ReferenceLine 
             key={`resistance-${index}`}
             y={level}
