@@ -1,120 +1,144 @@
-import { toast } from "@/components/ui/use-toast";
+const OPENAI_API_KEY = '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';
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+let requestQueue: Array<() => Promise<any>> = [];
+let isProcessingQueue = false;
 
 export interface AIAnalysisResponse {
-  strategy?: string;
-  technical?: string;
-  market?: string;
-  risks?: string;
+  strategy: string;
+  technical: string;
+  market: string;
+  risks: string;
 }
 
-interface OpenAIResponse {
-  strategy?: string;
-  technical?: string;
-  market?: string;
-  risks?: string;
-}
-
-const requestQueue: (() => Promise<any>)[] = [];
-let isProcessing = false;
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const processQueue = async () => {
-  if (isProcessing || requestQueue.length === 0) return;
+  if (isProcessingQueue || requestQueue.length === 0) return;
   
-  isProcessing = true;
-  try {
-    const nextRequest = requestQueue.shift();
-    if (nextRequest) {
-      await nextRequest();
-    }
-  } catch (error) {
-    console.error('Error processing request:', error);
-  } finally {
-    isProcessing = false;
-    if (requestQueue.length > 0) {
-      processQueue();
-    }
-  }
-};
-
-const makeOpenAIRequest = async (messages: any[]): Promise<any> => {
-  if (!OPENAI_API_KEY) {
-    toast({
-      title: "API Key Missing",
-      description: "OpenAI API key is not configured",
-      variant: "destructive",
-    });
-    throw new Error("OpenAI API key is not configured");
-  }
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Failed to get AI analysis');
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('OpenAI API error:', error);
-    toast({
-      title: "Analysis Error",
-      description: "Failed to generate AI analysis. Please try again later.",
-      variant: "destructive",
-    });
-    throw error;
-  }
-};
-
-const request = async (messages: any[]): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    requestQueue.push(async () => {
+  isProcessingQueue = true;
+  while (requestQueue.length > 0) {
+    const request = requestQueue.shift();
+    if (request) {
       try {
-        const result = await makeOpenAIRequest(messages);
-        resolve(result);
+        await request();
+        await wait(2000);
       } catch (error) {
-        reject(error);
+        console.error('Error processing queued request:', error);
       }
-    });
+    }
+  }
+  isProcessingQueue = false;
+};
+
+const getFallbackAnalysis = (symbol: string): AIAnalysisResponse => ({
+  strategy: "AI analysis temporarily unavailable. Please try again later.",
+  technical: "Technical analysis unavailable due to API limitations.",
+  market: "Market analysis unavailable due to API limitations.",
+  risks: "Risk analysis unavailable due to API limitations."
+});
+
+const makeOpenAIRequest = async (messages: any[]) => {
+  const maxRetries = 3;
+  let retryCount = 0;
+  let baseDelay = 2000;
+
+  while (retryCount < maxRetries) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages,
+          temperature: 0.7,
+          max_tokens: 100,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('OpenAI API error:', errorData);
+        
+        if (response.status === 429) {
+          const delay = baseDelay * Math.pow(2, retryCount);
+          console.log(`Rate limit exceeded, waiting ${delay}ms before retry`);
+          await wait(delay);
+          retryCount++;
+          continue;
+        }
+        
+        throw new Error(errorData.error?.message || 'OpenAI API request failed');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      if (retryCount === maxRetries - 1) {
+        throw error;
+      }
+      retryCount++;
+      await wait(baseDelay * Math.pow(2, retryCount));
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+};
+
+export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIAnalysisResponse> => {
+  return new Promise((resolve) => {
+    const request = async () => {
+      try {
+        const messages = [
+          {
+            role: 'system',
+            content: 'You are a financial analyst. Provide a very concise 1-2 sentence analysis of the stock. Focus only on the most important aspect.',
+          },
+          {
+            role: 'user',
+            content: `Analyze this stock data for ${symbol}: ${JSON.stringify(stockData)}`,
+          },
+        ];
+
+        const data = await makeOpenAIRequest(messages);
+        const analysis = data.choices[0].message.content;
+
+        const sections: AIAnalysisResponse = {
+          strategy: analysis,
+          technical: "",
+          market: "",
+          risks: "",
+        };
+
+        resolve(sections);
+      } catch (error) {
+        console.error('Error getting AI analysis:', error);
+        resolve(getFallbackAnalysis(symbol));
+      }
+    };
+
+    requestQueue.push(request);
     processQueue();
   });
 };
 
-export const getAIAnalysis = async (symbol: string, priceData: any): Promise<AIAnalysisResponse | null> => {
-  const messages = [
-    {
-      role: 'system',
-      content: 'You are a financial analyst providing detailed stock analysis.',
-    },
-    {
-      role: 'user',
-      content: `Analyze ${symbol} stock. Current price: $${priceData?.c.toFixed(2)}. Change: ${(priceData?.c - priceData?.o).toFixed(2)} (${((priceData?.c - priceData?.o) / priceData?.o * 100).toFixed(2)}%).`,
-    },
-  ];
-
-  try {
-    const response = await request(messages);
-    return {
-      strategy: response.choices[0].message.content,
-      technical: response.choices[1]?.message.content,
-      market: response.choices[2]?.message.content,
-      risks: response.choices[3]?.message.content,
-    };
-  } catch (error) {
-    console.error('Error getting AI analysis:', error);
-    return null;
-  }
+const markdownToHTML = (text: string): string => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>')
+    .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+    .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+    .replace(/# (.*?)\n/g, '<h1>$1</h1>');
 };
+
+const extractSection = (text: string, section: string): string => {
+  const regex = new RegExp(`${section}:?([^]*?)(?=(?:Investment Strategy|Technical Analysis|Market Analysis|Risk Factors):|$)`, 'i');
+  const match = text.match(regex);
+  return match ? match[1].trim() : `${section} information not available.`;
+};
+
+export { extractSection };

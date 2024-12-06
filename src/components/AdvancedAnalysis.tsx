@@ -18,20 +18,6 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["advancedAnalysis", symbol, timeframe],
     queryFn: async () => {
-      if (!historicalData || historicalData.length < 2) {
-        return {
-          monteCarlo: [],
-          elliottWave: {
-            currentWave: "Wave 1",
-            confidence: 0,
-            nextTarget: null,
-            patterns: [],
-            supportLevels: [],
-            resistanceLevels: []
-          }
-        };
-      }
-
       const simulatedPaths = generateMonteCarlo(historicalData, 10000);
       const elliotWavePatterns = calculateElliottWave(historicalData);
       
@@ -55,10 +41,6 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
     );
   }
 
-  const wavePosition = analysis?.elliottWave?.currentWave || "Wave 1";
-  const confidence = analysis?.elliottWave?.confidence || 0;
-  const nextTarget = analysis?.elliottWave?.nextTarget || null;
-
   return (
     <Card className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -75,14 +57,14 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
           />
           <div className="mt-4 space-y-2">
             <p className="text-sm text-muted-foreground">
-              Current Position: {wavePosition}
-              {confidence > 0 && 
-                ` (${confidence.toFixed(1)}% confidence)`
+              Current Position: {analysis?.elliottWave.currentWave}
+              {analysis?.elliottWave.confidence > 0 && 
+                ` (${analysis.elliottWave.confidence.toFixed(1)}% confidence)`
               }
             </p>
-            {nextTarget && (
+            {analysis?.elliottWave.nextTarget && (
               <p className="text-sm text-muted-foreground">
-                Next target: ${nextTarget.toFixed(2)}
+                Next target: ${analysis.elliottWave.nextTarget.toFixed(2)}
               </p>
             )}
           </div>
@@ -99,12 +81,8 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
             Based on 10,000 Monte Carlo simulations over {timeframe}:
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
-            {analysis?.monteCarlo?.[0] && (
-              <>
-                <li>70% chance of price between ${analysis.monteCarlo[0].lowerBound.toFixed(2)} and ${analysis.monteCarlo[0].upperBound.toFixed(2)}</li>
-                <li>Median projected price: ${analysis.monteCarlo[0].median.toFixed(2)}</li>
-              </>
-            )}
+            <li>70% chance of price between ${analysis?.monteCarlo[0]?.lowerBound.toFixed(2)} and ${analysis?.monteCarlo[0]?.upperBound.toFixed(2)}</li>
+            <li>Median projected price: ${analysis?.monteCarlo[0]?.median.toFixed(2)}</li>
           </ul>
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { WaveAnalysis } from "@/utils/elliottWaveAnalysis";
-import { format, isValid, parseISO } from "date-fns";
 
 interface ElliottWaveChartProps {
   data: any[];
@@ -10,45 +9,6 @@ interface ElliottWaveChartProps {
     resistanceLevels: number[];
   };
 }
-
-const formatDate = (dateStr: string | number) => {
-  try {
-    if (typeof dateStr === 'string') {
-      const parsedDate = parseISO(dateStr);
-      if (!isValid(parsedDate)) {
-        console.error('Invalid date:', dateStr);
-        return '';
-      }
-      return format(parsedDate, "MMM d, yyyy");
-    }
-    const date = new Date(dateStr);
-    if (!isValid(date)) {
-      console.error('Invalid date:', dateStr);
-      return '';
-    }
-    return format(date, "MMM d, yyyy");
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return '';
-  }
-};
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="rounded-lg border bg-background p-2 shadow-md">
-        <p className="mb-1 text-sm font-medium">
-          {formatDate(label)}
-        </p>
-        <p className="text-sm">
-          <span className="font-medium text-muted-foreground">PRICE: </span>
-          <span className="font-mono">${payload[0].value.toFixed(2)}</span>
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
   <div className="h-[300px]">
@@ -61,10 +21,6 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => {
-            const formattedDate = formatDate(value);
-            return formattedDate ? format(parseISO(formattedDate), "MMM d") : '';
-          }}
         />
         <YAxis 
           stroke="#888888"
@@ -73,7 +29,15 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           axisLine={false}
           domain={['auto', 'auto']}
         />
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'rgba(17, 17, 17, 0.95)',
+            border: 'none',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          }}
+          labelStyle={{ color: '#888888' }}
+        />
         <Line 
           type="monotone" 
           dataKey="price" 
@@ -82,7 +46,8 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           strokeWidth={2}
         />
         
-        {analysis?.supportLevels?.map((level, index) => (
+        {/* Support Levels */}
+        {analysis?.supportLevels.map((level, index) => (
           <ReferenceLine 
             key={`support-${index}`}
             y={level}
@@ -92,7 +57,8 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           />
         ))}
 
-        {analysis?.resistanceLevels?.map((level, index) => (
+        {/* Resistance Levels */}
+        {analysis?.resistanceLevels.map((level, index) => (
           <ReferenceLine 
             key={`resistance-${index}`}
             y={level}
