@@ -1,10 +1,10 @@
-interface WavePoint {
+export interface WavePoint {
   price: number;
   index: number;
   type: 'high' | 'low';
 }
 
-interface WavePattern {
+export interface WavePattern {
   degree: 'Primary' | 'Intermediate' | 'Minor';
   position: number;
   startIndex: number;
@@ -14,7 +14,7 @@ interface WavePattern {
   confidence: number;
 }
 
-interface WaveAnalysis {
+export interface WaveAnalysis {
   currentWave: string;
   confidence: number;
   nextTarget: number | null;
