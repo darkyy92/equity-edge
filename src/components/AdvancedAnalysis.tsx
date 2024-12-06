@@ -51,7 +51,23 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
       <div className="space-y-6">
         <div>
           <h4 className="font-medium mb-2">Elliott Wave Pattern</h4>
-          <ElliottWaveChart data={historicalData} />
+          <ElliottWaveChart 
+            data={historicalData} 
+            analysis={analysis?.elliottWave}
+          />
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Current Position: {analysis?.elliottWave.currentWave}
+              {analysis?.elliottWave.confidence > 0 && 
+                ` (${analysis.elliottWave.confidence.toFixed(1)}% confidence)`
+              }
+            </p>
+            {analysis?.elliottWave.nextTarget && (
+              <p className="text-sm text-muted-foreground">
+                Next target: ${analysis.elliottWave.nextTarget.toFixed(2)}
+              </p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -67,8 +83,6 @@ const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => 
           <ul className="list-disc list-inside space-y-1 text-sm">
             <li>70% chance of price between ${analysis?.monteCarlo[0]?.lowerBound.toFixed(2)} and ${analysis?.monteCarlo[0]?.upperBound.toFixed(2)}</li>
             <li>Median projected price: ${analysis?.monteCarlo[0]?.median.toFixed(2)}</li>
-            <li>Current Elliott Wave: Wave {analysis?.elliottWave?.currentWave} ({analysis?.elliottWave?.confidence.toFixed(1)}% confidence)</li>
-            <li>Next target: ${analysis?.elliottWave?.nextTarget?.toFixed(2)}</li>
           </ul>
         </div>
       </div>
