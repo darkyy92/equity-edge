@@ -1,5 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { WaveAnalysis } from "@/utils/elliottWaveAnalysis";
+import { format } from "date-fns";
 
 interface ElliottWaveChartProps {
   data: any[];
@@ -9,6 +10,23 @@ interface ElliottWaveChartProps {
     resistanceLevels: number[];
   };
 }
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border bg-background p-2 shadow-md">
+        <p className="mb-1 text-sm font-medium">
+          {format(new Date(label), "MMM d, yyyy")}
+        </p>
+        <p className="text-sm">
+          <span className="font-medium text-muted-foreground">PRICE: </span>
+          <span className="font-mono">${payload[0].value.toFixed(2)}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
   <div className="h-[300px]">
@@ -21,6 +39,7 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           fontSize={12}
           tickLine={false}
           axisLine={false}
+          tickFormatter={(value) => format(new Date(value), "MMM d")}
         />
         <YAxis 
           stroke="#888888"
@@ -29,15 +48,7 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           axisLine={false}
           domain={['auto', 'auto']}
         />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'rgba(17, 17, 17, 0.95)',
-            border: 'none',
-            borderRadius: '8px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          }}
-          labelStyle={{ color: '#888888' }}
-        />
+        <Tooltip content={<CustomTooltip />} />
         <Line 
           type="monotone" 
           dataKey="price" 
