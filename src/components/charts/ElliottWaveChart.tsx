@@ -11,12 +11,26 @@ interface ElliottWaveChartProps {
   };
 }
 
+const formatDate = (dateStr: string | number) => {
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date:', dateStr);
+      return '';
+    }
+    return format(date, "MMM d, yyyy");
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
+  }
+};
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-lg border bg-background p-2 shadow-md">
         <p className="mb-1 text-sm font-medium">
-          {format(new Date(label), "MMM d, yyyy")}
+          {formatDate(label)}
         </p>
         <p className="text-sm">
           <span className="font-medium text-muted-foreground">PRICE: </span>
@@ -39,7 +53,19 @@ const ElliottWaveChart = ({ data, analysis }: ElliottWaveChartProps) => (
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => format(new Date(value), "MMM d")}
+          tickFormatter={(value) => {
+            try {
+              const date = new Date(value);
+              if (isNaN(date.getTime())) {
+                console.error('Invalid date for X-axis:', value);
+                return '';
+              }
+              return format(date, "MMM d");
+            } catch (error) {
+              console.error('Error formatting X-axis date:', error);
+              return '';
+            }
+          }}
         />
         <YAxis 
           stroke="#888888"
