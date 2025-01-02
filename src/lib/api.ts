@@ -2,8 +2,8 @@ import { toast } from "@/components/ui/use-toast";
 import { StockTicker } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 
-const MARKETSTACK_API_KEY = 'bf765ce0b1e243a39197f24a5c347d00';
-const BASE_URL = 'https://api.marketstack.com/v2';
+const POLYGON_API_KEY = 's3Kgk9rqPEj4IBl3Bo8Aiv7y53slSpSc';
+const BASE_URL = 'https://api.polygon.io';
 
 const fetchWithCORS = async (url: string, options: RequestInit = {}) => {
   const defaultOptions: RequestInit = {
@@ -100,12 +100,10 @@ export const getDailyPrices = async (symbol: string, timeRange: string = "1W"): 
   try {
     const endDate = new Date().toISOString().split('T')[0];
     let startDate: string;
-    let interval = 'daily';
     
     switch(timeRange) {
       case "1D":
         startDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        interval = 'hourly';
         break;
       case "1W":
         startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -125,34 +123,6 @@ export const getDailyPrices = async (symbol: string, timeRange: string = "1W"): 
       default:
         startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     }
-
-    const response = await fetch(
-      `${BASE_URL}/timeseries?access_key=${MARKETSTACK_API_KEY}&symbols=${symbol}&interval=${interval}&date_from=${startDate}&date_to=${endDate}`
-    );
-
-    if (!response.ok) throw new Error('Failed to fetch daily prices');
-    const data = await response.json();
-
-    if (!data.data) throw new Error('No results found');
-
-    // Transform data to match existing format
-    const lastEntry = data.data[0];
-    const chartData = data.data.reverse().map((item: any) => ({
-      timestamp: timeRange === "1D"
-        ? new Date(item.date).toLocaleTimeString()
-        : new Date(item.date).toLocaleDateString(),
-      price: item.close,
-    }));
-
-    return {
-      c: lastEntry.close,
-      o: lastEntry.open,
-      h: lastEntry.high,
-      l: lastEntry.low,
-      v: lastEntry.volume,
-      vw: (lastEntry.high + lastEntry.low) / 2, // Approximate VWAP
-      chartData,
-    };
     
     const multiplier = timeRange === "1D" ? 5 : 1;
     const timespan = timeRange === "1D" ? "minute" : "day";
@@ -186,7 +156,7 @@ export const getDailyPrices = async (symbol: string, timeRange: string = "1W"): 
 export const searchStocks = async (query: string): Promise<StockTicker[]> => {
   try {
     const response = await fetch(
-      `${BASE_URL}/tickers?access_key=${MARKETSTACK_API_KEY}&search=${encodeURIComponent(query)}&limit=10`
+      `${BASE_URL}/v3/reference/tickers?search=${encodeURIComponent(query)}&active=true&sort=ticker&order=asc&limit=10&apiKey=${POLYGON_API_KEY}`
     );
     if (!response.ok) throw new Error('Failed to search stocks');
     const data = await response.json();
@@ -207,10 +177,10 @@ export const getRecommendedStocks = async (): Promise<StockTicker[]> => {
     const stocks = await Promise.all(
       popularStocks.map(async (symbol) => {
         const response = await fetch(
-          `${BASE_URL}/tickers/${symbol}?access_key=${MARKETSTACK_API_KEY}`
+          `${BASE_URL}/v3/reference/tickers/${symbol}?apiKey=${POLYGON_API_KEY}`
         );
         const priceResponse = await fetch(
-          `${BASE_URL}/intraday/latest?access_key=${MARKETSTACK_API_KEY}&symbols=${symbol}`
+          `${BASE_URL}/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`
         );
         
         const details = await response.json();

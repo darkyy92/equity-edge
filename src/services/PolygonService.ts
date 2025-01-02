@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const MARKETSTACK_API_KEY = 'bf765ce0b1e243a39197f24a5c347d00';
-const BASE_URL = 'https://api.marketstack.com/v2';
+const POLYGON_API_KEY = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+const BASE_URL = 'https://api.polygon.io';
 
 export interface StockData {
   ticker: string;
@@ -14,36 +14,32 @@ export interface StockData {
   timestamp: number;
 }
 
-export class MarketStackService {
+export class PolygonService {
   static async getStockData(symbols: string[]): Promise<StockData[]> {
     const today = new Date();
     const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     
     const promises = symbols.map(async (symbol) => {
       const response = await axios.get(
-        `${BASE_URL}/timeseries`,
+        `${BASE_URL}/v2/aggs/ticker/${symbol}/range/1/day/${lastWeek.toISOString().split('T')[0]}/${today.toISOString().split('T')[0]}`,
         {
           params: {
-            access_key: MARKETSTACK_API_KEY,
-            symbols: symbol,
-            date_from: lastWeek.toISOString().split('T')[0],
-            date_to: today.toISOString().split('T')[0],
-            interval: 'daily'
+            apiKey: POLYGON_API_KEY,
           },
         }
       );
 
-      const latestData = response.data.data[0];
+      const latestData = response.data.results[response.data.results.length - 1];
       
       return {
         ticker: symbol,
-        close: latestData.close,
-        high: latestData.high,
-        low: latestData.low,
-        open: latestData.open,
-        volume: latestData.volume,
-        vwap: (latestData.high + latestData.low) / 2, // Approximate VWAP
-        timestamp: new Date(latestData.date).getTime(),
+        close: latestData.c,
+        high: latestData.h,
+        low: latestData.l,
+        open: latestData.o,
+        volume: latestData.v,
+        vwap: latestData.vw,
+        timestamp: latestData.t,
       };
     });
 
