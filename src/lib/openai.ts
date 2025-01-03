@@ -8,8 +8,8 @@ export interface AIAnalysisResponse {
   risks: string;
 }
 
-// Remove hardcoded API key and use environment variable
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+// Use environment variable from Supabase client
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
