@@ -10,13 +10,15 @@ const MarketOverview = () => {
     "DIA": "DOW JONES"
   };
 
-  const { data: prices } = useQuery({
+  const { data: prices, isLoading } = useQuery({
     queryKey: ['marketIndices'],
     queryFn: async () => {
       const data: Record<string, any> = {};
       for (const symbol of Object.keys(indices)) {
         const stockData = await MarketStackService.getDailyPrices(symbol, 1);
-        data[symbol] = stockData[0];
+        if (stockData && stockData.length > 0) {
+          data[symbol] = stockData[0];
+        }
       }
       return data;
     },
@@ -28,6 +30,25 @@ const MarketOverview = () => {
     const data = prices[symbol];
     return ((data.close - data.open) / data.open) * 100;
   };
+
+  if (isLoading) {
+    return (
+      <Card className="glass-card p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Array(3).fill(null).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-8 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-card p-6">
@@ -44,7 +65,7 @@ const MarketOverview = () => {
             <div key={symbol} className="space-y-2">
               <p className="text-sm text-muted-foreground">{name}</p>
               <p className="text-2xl font-bold">
-                ${prices?.[symbol]?.close.toFixed(2) || "0.00"}
+                ${prices?.[symbol]?.close?.toFixed(2) || "0.00"}
               </p>
               <div className={`flex items-center ${isPositive ? 'text-success' : 'text-error'}`}>
                 {isPositive ? (
