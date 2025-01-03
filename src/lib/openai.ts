@@ -1,5 +1,3 @@
-const OPENAI_API_KEY = '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';
-
 let requestQueue: Array<() => Promise<any>> = [];
 let isProcessingQueue = false;
 
@@ -9,6 +7,9 @@ export interface AIAnalysisResponse {
   market: string;
   risks: string;
 }
+
+// Remove hardcoded API key and use environment variable
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

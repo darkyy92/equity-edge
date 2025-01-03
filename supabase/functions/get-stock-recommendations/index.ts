@@ -36,7 +36,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial analyst. Return ONLY a JSON array of 6 stock recommendations. Each object must have exactly these fields and types:
+            content: `You are a financial analyst. Return ONLY a raw JSON array of 6 stock recommendations. Each object must have exactly these fields and types:
             {
               "symbol": string,
               "reason": string,
@@ -44,7 +44,7 @@ serve(async (req) => {
               "potentialGrowth": number,
               "primaryDrivers": string[]
             }
-            Do not include any markdown formatting or explanation text. Return only the JSON array.`
+            Do not include any markdown, code blocks, or explanation text. Return only the raw JSON array.`
           },
           {
             role: 'user',
