@@ -69,7 +69,6 @@ const makeOpenAIRequest = async (messages: any[]) => {
         
         if (response.status === 429) {
           const delay = baseDelay * Math.pow(2, retryCount);
-          console.log(`Rate limit exceeded, waiting ${delay}ms before retry`);
           await wait(delay);
           retryCount++;
           continue;
