@@ -10,14 +10,19 @@ const MarketOverview = () => {
     "DIA": "DOW JONES"
   };
 
-  const { data: prices, isLoading } = useQuery({
+  const { data: prices, isLoading, error } = useQuery({
     queryKey: ['marketIndices'],
     queryFn: async () => {
       const data: Record<string, any> = {};
       for (const symbol of Object.keys(indices)) {
-        const stockData = await MarketStackService.getDailyPrices(symbol, 1);
-        if (stockData && stockData.length > 0) {
-          data[symbol] = stockData[0];
+        try {
+          const stockData = await MarketStackService.getDailyPrices(symbol, 1);
+          if (stockData && stockData.length > 0) {
+            data[symbol] = stockData[0];
+            console.log(`Fetched data for ${symbol}:`, stockData[0]);
+          }
+        } catch (err) {
+          console.error(`Error fetching data for ${symbol}:`, err);
         }
       }
       return data;
@@ -26,8 +31,9 @@ const MarketOverview = () => {
   });
 
   const getChangePercent = (symbol: string) => {
-    if (!prices?.[symbol]) return 0;
+    if (!prices || !prices[symbol]) return 0;
     const data = prices[symbol];
+    if (!data.open || !data.close) return 0;
     return ((data.close - data.open) / data.open) * 100;
   };
 
@@ -50,6 +56,16 @@ const MarketOverview = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Card className="glass-card p-6">
+        <div className="text-error">
+          Failed to load market data. Please try again later.
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="glass-card p-6">
       <div className="flex items-center justify-between mb-6">
@@ -58,14 +74,28 @@ const MarketOverview = () => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {Object.entries(indices).map(([symbol, name]) => {
+          const stockData = prices?.[symbol];
           const changePercent = getChangePercent(symbol);
           const isPositive = changePercent >= 0;
+          const price = stockData?.close;
+
+          if (!stockData || price === undefined) {
+            return (
+              <div key={symbol} className="space-y-2">
+                <p className="text-sm text-muted-foreground">{name}</p>
+                <p className="text-2xl font-bold">--</p>
+                <div className="text-muted-foreground">
+                  <span className="text-sm">No data available</span>
+                </div>
+              </div>
+            );
+          }
 
           return (
             <div key={symbol} className="space-y-2">
               <p className="text-sm text-muted-foreground">{name}</p>
               <p className="text-2xl font-bold">
-                ${prices?.[symbol]?.close?.toFixed(2) || "0.00"}
+                ${price.toFixed(2)}
               </p>
               <div className={`flex items-center ${isPositive ? 'text-success' : 'text-error'}`}>
                 {isPositive ? (
