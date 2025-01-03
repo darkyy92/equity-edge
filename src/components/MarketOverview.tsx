@@ -77,9 +77,8 @@ const MarketOverview = () => {
           const stockData = prices?.[symbol];
           const changePercent = getChangePercent(symbol);
           const isPositive = changePercent >= 0;
-          const price = stockData?.close;
 
-          if (!stockData || price === undefined) {
+          if (!stockData || !stockData.close) {
             return (
               <div key={symbol} className="space-y-2">
                 <p className="text-sm text-muted-foreground">{name}</p>
@@ -95,7 +94,7 @@ const MarketOverview = () => {
             <div key={symbol} className="space-y-2">
               <p className="text-sm text-muted-foreground">{name}</p>
               <p className="text-2xl font-bold">
-                ${price.toFixed(2)}
+                ${stockData.close.toFixed(2)}
               </p>
               <div className={`flex items-center ${isPositive ? 'text-success' : 'text-error'}`}>
                 {isPositive ? (
