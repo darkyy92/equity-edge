@@ -1,4 +1,4 @@
-import { AIAnalysisResponse } from './types';
+import { AIAnalysisResponse, OpenAIMessage } from './types';
 import { makeOpenAIRequest } from './api';
 import { addToQueue } from './queue';
 
@@ -13,13 +13,13 @@ export const getAIAnalysis = async (symbol: string, stockData: any): Promise<AIA
   return new Promise((resolve) => {
     const request = async () => {
       try {
-        const messages = [
+        const messages: OpenAIMessage[] = [
           {
-            role: 'system',
+            role: 'system' as const,
             content: 'You are a financial analyst. Provide a very concise 1-2 sentence analysis of the stock. Focus only on the most important aspect.',
           },
           {
-            role: 'user',
+            role: 'user' as const,
             content: `Analyze this stock data for ${symbol}: ${JSON.stringify(stockData)}`,
           },
         ];
