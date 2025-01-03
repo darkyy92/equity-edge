@@ -1,9 +1,5 @@
 import OpenAI from 'openai';
-import { StockData } from './PolygonService';
-
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
+import { StockData } from './MarketStackService';
 
 export interface StockRecommendation {
   ticker: string;
@@ -33,4 +29,4 @@ export class StockAnalysisService {
     const response = JSON.parse(completion.choices[0].message.content);
     return response.recommendations;
   }
-} 
+}
