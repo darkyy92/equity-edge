@@ -36,21 +36,19 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial analyst specializing in discovering both established and under-the-radar investment opportunities. Focus on a mix of:
-            1. Well-known, stable companies (30% of recommendations)
-            2. Mid-cap companies with strong growth potential (40% of recommendations)
-            3. Lesser-known small-cap companies with exceptional potential (30% of recommendations)
-            
-            For each recommendation, provide detailed reasoning focusing on unique competitive advantages, market opportunities, and growth catalysts.`
+            content: `You are a financial analyst. Return ONLY a JSON array of 6 stock recommendations. Each object must have exactly these fields and types:
+            {
+              "symbol": string,
+              "reason": string,
+              "confidence": number (0-100),
+              "potentialGrowth": number,
+              "primaryDrivers": string[]
+            }
+            Do not include any markdown formatting or explanation text. Return only the JSON array.`
           },
           {
             role: 'user',
-            content: `Generate 6 diverse stock recommendations for ${timeframe}-term investment, including both established and promising lesser-known companies. Include specific growth catalysts and unique opportunities. Return ONLY a JSON array containing objects with these exact fields: 
-            - symbol (stock ticker)
-            - reason (brief explanation)
-            - confidence (number between 0-100)
-            - potentialGrowth (number representing expected percentage growth)
-            - primaryDrivers (array of 3-5 strings with key growth catalysts)`
+            content: `Generate 6 diverse ${timeframe}-term stock recommendations, including both established and promising companies.`
           }
         ],
         temperature: 0.7,
@@ -70,25 +68,82 @@ serve(async (req) => {
       throw new Error('Invalid AI response format');
     }
 
-    const recommendations = JSON.parse(aiData.choices[0].message.content);
-    console.log('Parsed recommendations:', recommendations);
-
-    if (!Array.isArray(recommendations)) {
-      console.error('Invalid recommendations format:', recommendations);
-      throw new Error('Invalid recommendations format');
+    let recommendations;
+    try {
+      recommendations = JSON.parse(aiData.choices[0].message.content);
+      
+      // Validate the response structure
+      if (!Array.isArray(recommendations)) {
+        throw new Error('Response is not an array');
+      }
+      
+      recommendations.forEach((rec: any, index: number) => {
+        if (!rec.symbol || !rec.reason || typeof rec.confidence !== 'number' || 
+            typeof rec.potentialGrowth !== 'number' || !Array.isArray(rec.primaryDrivers)) {
+          throw new Error(`Invalid recommendation format at index ${index}`);
+        }
+      });
+    } catch (error) {
+      console.error('Error parsing AI recommendations:', error);
+      console.error('Raw content:', aiData.choices[0].message.content);
+      throw new Error('Failed to parse AI recommendations');
     }
 
-    const enrichedRecommendations = await Promise.all(
-      recommendations.map(async (rec: any) => {
-        try {
-          console.log('Fetching MarketStack data for:', rec.symbol);
-          const response = await fetch(
-            `https://api.marketstack.com/v1/eod?access_key=${MARKETSTACK_API_KEY}&symbols=${rec.symbol}&limit=1`
-          );
+    console.log('Parsed recommendations:', recommendations);
 
-          if (!response.ok) {
-            console.warn(`MarketStack API error for ${rec.symbol}:`, await response.text());
-            // Return basic recommendation without market data
+    // Enrich with market data if available
+    if (MARKETSTACK_API_KEY) {
+      const enrichedRecommendations = await Promise.all(
+        recommendations.map(async (rec: any) => {
+          try {
+            console.log('Fetching MarketStack data for:', rec.symbol);
+            const response = await fetch(
+              `https://api.marketstack.com/v1/eod?access_key=${MARKETSTACK_API_KEY}&symbols=${rec.symbol}&limit=1`
+            );
+
+            if (!response.ok) {
+              console.warn(`MarketStack API error for ${rec.symbol}:`, await response.text());
+              return {
+                ...rec,
+                price: null,
+                change: null,
+                changePercent: null,
+                volume: null,
+                confidence_metrics: {
+                  confidence: rec.confidence
+                },
+                [`${timeframe}_term_analysis`]: {
+                  potentialGrowth: rec.potentialGrowth,
+                  timeframe,
+                  confidence: rec.confidence,
+                  reason: rec.reason
+                },
+                primary_drivers: rec.primaryDrivers
+              };
+            }
+
+            const data = await response.json();
+            const latestPrice = data.data[0];
+
+            return {
+              ...rec,
+              price: latestPrice?.close || null,
+              change: latestPrice ? (latestPrice.close - latestPrice.open) : null,
+              changePercent: latestPrice ? ((latestPrice.close - latestPrice.open) / latestPrice.open) * 100 : null,
+              volume: latestPrice?.volume || null,
+              confidence_metrics: {
+                confidence: rec.confidence
+              },
+              [`${timeframe}_term_analysis`]: {
+                potentialGrowth: rec.potentialGrowth,
+                timeframe,
+                confidence: rec.confidence,
+                reason: rec.reason
+              },
+              primary_drivers: rec.primaryDrivers
+            };
+          } catch (error) {
+            console.error(`Error processing ${rec.symbol}:`, error);
             return {
               ...rec,
               price: null,
@@ -104,59 +159,39 @@ serve(async (req) => {
                 confidence: rec.confidence,
                 reason: rec.reason
               },
-              primary_drivers: rec.primaryDrivers || []
+              primary_drivers: rec.primaryDrivers
             };
           }
+        })
+      );
 
-          const data = await response.json();
-          const latestPrice = data.data[0];
-
-          return {
-            ...rec,
-            price: latestPrice?.close || null,
-            change: latestPrice ? (latestPrice.close - latestPrice.open) : null,
-            changePercent: latestPrice ? ((latestPrice.close - latestPrice.open) / latestPrice.open) * 100 : null,
-            volume: latestPrice?.volume || null,
-            confidence_metrics: {
-              confidence: rec.confidence
-            },
-            [`${timeframe}_term_analysis`]: {
-              potentialGrowth: rec.potentialGrowth,
-              timeframe,
-              confidence: rec.confidence,
-              reason: rec.reason
-            },
-            primary_drivers: rec.primaryDrivers || []
-          };
-        } catch (error) {
-          console.error(`Error processing ${rec.symbol}:`, error);
-          // Return basic recommendation without market data
-          return {
-            ...rec,
-            price: null,
-            change: null,
-            changePercent: null,
-            volume: null,
-            confidence_metrics: {
-              confidence: rec.confidence
-            },
-            [`${timeframe}_term_analysis`]: {
-              potentialGrowth: rec.potentialGrowth,
-              timeframe,
-              confidence: rec.confidence,
-              reason: rec.reason
-            },
-            primary_drivers: rec.primaryDrivers || []
-          };
+      console.log('Enriched recommendations:', enrichedRecommendations);
+      return new Response(
+        JSON.stringify({
+          recommendations: enrichedRecommendations
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
-      })
-    );
+      );
+    }
 
-    console.log('Enriched recommendations:', enrichedRecommendations);
-
+    // Return basic recommendations if MarketStack API is not available
     return new Response(
       JSON.stringify({
-        recommendations: enrichedRecommendations
+        recommendations: recommendations.map((rec: any) => ({
+          ...rec,
+          confidence_metrics: {
+            confidence: rec.confidence
+          },
+          [`${timeframe}_term_analysis`]: {
+            potentialGrowth: rec.potentialGrowth,
+            timeframe,
+            confidence: rec.confidence,
+            reason: rec.reason
+          },
+          primary_drivers: rec.primaryDrivers
+        }))
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
