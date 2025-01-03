@@ -19,6 +19,10 @@ serve(async (req) => {
     console.log('Starting get-stock-recommendations function');
     const { timeframe = 'short' } = await req.json();
 
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
     console.log('Fetching AI recommendations for timeframe:', timeframe);
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
