@@ -3,6 +3,11 @@ import { OpenAIMessage, OpenAIResponse } from './types';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 export const makeOpenAIRequest = async (messages: OpenAIMessage[]): Promise<OpenAIResponse> => {
+  if (!OPENAI_API_KEY) {
+    console.error('OpenAI API key is not configured');
+    throw new Error('OpenAI API key is not configured. Please set it in your Supabase project settings.');
+  }
+
   const maxRetries = 3;
   let retryCount = 0;
   let baseDelay = 2000;
@@ -35,10 +40,15 @@ export const makeOpenAIRequest = async (messages: OpenAIMessage[]): Promise<Open
           continue;
         }
         
+        if (response.status === 401) {
+          throw new Error('Invalid OpenAI API key. Please check your API key in the Supabase project settings.');
+        }
+        
         throw new Error(errorData.error?.message || 'OpenAI API request failed');
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('OpenAI API error:', error);
       if (retryCount === maxRetries - 1) throw error;
