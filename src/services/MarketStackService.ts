@@ -68,6 +68,11 @@ export class MarketStackService {
       const data = await response.json() as MarketStackResponse;
       console.log('MarketStack Daily Prices Response:', data);
       
+      if (!data.data || data.data.length === 0) {
+        console.error('No data returned from MarketStack API');
+        return [];
+      }
+
       return data.data.map((price) => ({
         date: new Date(price.date),
         open: price.open,
