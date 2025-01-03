@@ -1,4 +1,4 @@
-import { PolygonService } from '@/services/PolygonService';
+import { MarketStackService } from '@/services/MarketStackService';
 import { StockAnalysisService } from '@/services/StockAnalysisService';
 
 export default async function Home() {
@@ -6,7 +6,7 @@ export default async function Home() {
   const stockSymbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'META'];
   
   // Fetch stock data
-  const stocksData = await PolygonService.getStockData(stockSymbols);
+  const stocksData = await MarketStackService.getStockData(stockSymbols);
   
   // Get AI recommendations
   const recommendations = await StockAnalysisService.analyzeStocks(stocksData);
@@ -31,4 +31,4 @@ export default async function Home() {
       </div>
     </main>
   );
-} 
+}

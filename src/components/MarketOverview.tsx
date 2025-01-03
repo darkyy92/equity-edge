@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { ChartLineIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getDailyPrices } from "@/lib/api";
+import { MarketStackService } from "@/services/MarketStackService";
 
 const MarketOverview = () => {
   const indices = {
@@ -15,7 +15,8 @@ const MarketOverview = () => {
     queryFn: async () => {
       const data: Record<string, any> = {};
       for (const symbol of Object.keys(indices)) {
-        data[symbol] = await getDailyPrices(symbol);
+        const stockData = await MarketStackService.getDailyPrices(symbol, 1);
+        data[symbol] = stockData[0];
       }
       return data;
     },
@@ -25,7 +26,7 @@ const MarketOverview = () => {
   const getChangePercent = (symbol: string) => {
     if (!prices?.[symbol]) return 0;
     const data = prices[symbol];
-    return ((data.c - data.o) / data.o) * 100;
+    return ((data.close - data.open) / data.open) * 100;
   };
 
   return (
@@ -43,7 +44,7 @@ const MarketOverview = () => {
             <div key={symbol} className="space-y-2">
               <p className="text-sm text-muted-foreground">{name}</p>
               <p className="text-2xl font-bold">
-                ${prices?.[symbol]?.c.toFixed(2) || "0.00"}
+                ${prices?.[symbol]?.close.toFixed(2) || "0.00"}
               </p>
               <div className={`flex items-center ${isPositive ? 'text-success' : 'text-error'}`}>
                 {isPositive ? (

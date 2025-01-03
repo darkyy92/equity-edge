@@ -11,6 +11,7 @@ import {
   ReferenceArea,
 } from "recharts";
 import { Json } from "@/integrations/supabase/types";
+import { format } from "date-fns";
 
 interface EntryRangeChartProps {
   data: any[];
@@ -23,8 +24,14 @@ const EntryRangeChart = ({ data, entryRange }: EntryRangeChartProps) => {
   const range = entryRange as { lower: number; upper: number };
   if (!range?.lower || !range?.upper) return null;
 
-  const minPrice = Math.min(...data.map((d) => d.price));
-  const maxPrice = Math.max(...data.map((d) => d.price));
+  const formattedData = data.map(d => ({
+    ...d,
+    date: format(new Date(d.date), 'MMM dd'),
+    price: d.close
+  }));
+
+  const minPrice = Math.min(...formattedData.map((d) => d.price));
+  const maxPrice = Math.max(...formattedData.map((d) => d.price));
   const padding = (maxPrice - minPrice) * 0.1;
 
   return (
@@ -38,7 +45,7 @@ const EntryRangeChart = ({ data, entryRange }: EntryRangeChartProps) => {
       
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <LineChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <XAxis dataKey="date" />
             <YAxis 
               domain={[minPrice - padding, maxPrice + padding]}

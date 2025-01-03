@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const MARKETSTACK_API_KEY = Deno.env.get('MARKETSTACK_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -76,23 +77,21 @@ serve(async (req) => {
     const enrichedRecommendations = await Promise.all(
       recommendations.map(async (rec: any) => {
         try {
-          console.log('Fetching Polygon data for:', rec.symbol);
-          const [detailsResponse, priceResponse] = await Promise.all([
-            fetch(`https://api.polygon.io/v3/reference/tickers/${rec.symbol}?apiKey=${Deno.env.get('POLYGON_API_KEY')}`),
-            fetch(`https://api.polygon.io/v2/aggs/ticker/${rec.symbol}/prev?adjusted=true&apiKey=${Deno.env.get('POLYGON_API_KEY')}`)
-          ]);
+          console.log('Fetching MarketStack data for:', rec.symbol);
+          const response = await fetch(
+            `http://api.marketstack.com/v1/eod?access_key=${MARKETSTACK_API_KEY}&symbols=${rec.symbol}&limit=1`
+          );
 
-          if (!detailsResponse.ok || !priceResponse.ok) {
-            console.error(`Failed to fetch Polygon data for ${rec.symbol}:`, 
-              await Promise.all([detailsResponse.text(), priceResponse.text()]));
+          if (!response.ok) {
+            console.error(`Failed to fetch MarketStack data for ${rec.symbol}`);
             throw new Error(`Failed to fetch data for ${rec.symbol}`);
           }
 
-          const details = await detailsResponse.json();
-          const price = await priceResponse.json();
+          const data = await response.json();
+          const latestPrice = data.data[0];
 
-          if (!details.results || !price.results?.[0]) {
-            console.error(`Invalid Polygon response for ${rec.symbol}:`, { details, price });
+          if (!latestPrice) {
+            console.error(`Invalid MarketStack response for ${rec.symbol}`);
             throw new Error(`Invalid data format for ${rec.symbol}`);
           }
 
@@ -105,14 +104,10 @@ serve(async (req) => {
 
           return {
             ...rec,
-            name: details.results.name,
-            isin: details.results.isin,
-            valor_number: details.results.valor_number,
-            price: price.results[0].c,
-            change: price.results[0].c - price.results[0].o,
-            changePercent: ((price.results[0].c - price.results[0].o) / price.results[0].o) * 100,
-            volume: price.results[0].v,
-            vwap: price.results[0].vw,
+            price: latestPrice.close,
+            change: latestPrice.close - latestPrice.open,
+            changePercent: ((latestPrice.close - latestPrice.open) / latestPrice.open) * 100,
+            volume: latestPrice.volume,
             confidence_metrics: {
               confidence: rec.confidence
             },
