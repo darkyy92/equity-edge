@@ -1,6 +1,10 @@
 import OpenAI from 'openai';
 import { StockData } from './MarketStackService';
 
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+});
+
 export interface StockRecommendation {
   ticker: string;
   recommendation: string;
@@ -22,7 +26,7 @@ export class StockAnalysisService {
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o-mini",
       response_format: { type: "json_object" },
     });
 

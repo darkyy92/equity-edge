@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const MARKETSTACK_API_KEY = process.env.NEXT_PUBLIC_MARKETSTACK_API_KEY;
+const MARKETSTACK_API_KEY = import.meta.env.VITE_MARKETSTACK_API_KEY;
 const BASE_URL = 'http://api.marketstack.com/v1';
 
 export interface StockData {
