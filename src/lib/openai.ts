@@ -8,7 +8,6 @@ export interface AIAnalysisResponse {
   risks: string;
 }
 
-// Use environment variable from Supabase client
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -39,6 +38,11 @@ const getFallbackAnalysis = (symbol: string): AIAnalysisResponse => ({
 });
 
 const makeOpenAIRequest = async (messages: any[]) => {
+  if (!OPENAI_API_KEY) {
+    console.error('OpenAI API key is not configured');
+    throw new Error('OpenAI API key is not configured');
+  }
+
   const maxRetries = 3;
   let retryCount = 0;
   let baseDelay = 2000;
@@ -60,7 +64,7 @@ const makeOpenAIRequest = async (messages: any[]) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         console.error('OpenAI API error:', errorData);
         
         if (response.status === 429) {
@@ -74,7 +78,8 @@ const makeOpenAIRequest = async (messages: any[]) => {
         throw new Error(errorData.error?.message || 'OpenAI API request failed');
       }
 
-      const data = await response.json();
+      const clonedResponse = response.clone();
+      const data = await clonedResponse.json();
       return data;
     } catch (error) {
       console.error('OpenAI API error:', error);
