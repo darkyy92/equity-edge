@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const MARKETSTACK_API_KEY = '959d63ed3d8e994a24448aad1ccc8787';
-const BASE_URL = 'http://api.marketstack.com/v1';
+const BASE_URL = 'https://api.marketstack.com/v1';
 
 export interface StockData {
   ticker: string;
