@@ -115,12 +115,12 @@ const RecommendationCard = ({
           </div>
         </div>
 
-        <div className="space-y-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           {primaryDrivers.map((driver, index) => (
             <Badge 
               key={index} 
               variant="outline" 
-              className="mr-2 mb-2 bg-accent/50 text-foreground border-accent"
+              className="bg-accent/50 text-foreground border-accent"
             >
               {driver}
             </Badge>
