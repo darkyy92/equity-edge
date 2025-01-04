@@ -41,21 +41,19 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
       console.log('Fetching recommendations for timeframe:', timeframe);
       
       try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-recommendations`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ timeframe }),
-        });
+        const { data: { data: functionResponse }, error: functionError } = await supabase.functions.invoke(
+          'get-stock-recommendations',
+          {
+            body: JSON.stringify({ timeframe }),
+          }
+        );
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch recommendations');
+        if (functionError) {
+          console.error('Error calling edge function:', functionError);
+          throw functionError;
         }
 
-        const data = await response.json();
-        return data.recommendations?.map(rec => transformToStockTicker(rec)) || [];
+        return functionResponse?.recommendations?.map(rec => transformToStockTicker(rec)) || [];
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         throw error;
