@@ -54,7 +54,6 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
   }
 
   const getConfidence = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    // Get confidence from the specific timeframe analysis if available
     const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
     const analysis = stock[timeframeKey] as any;
     
@@ -62,12 +61,10 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
       return analysis.confidence_metrics.confidence;
     }
     
-    // Fallback to aiAnalysis if available
     if (stock.aiAnalysis?.confidence) {
       return stock.aiAnalysis.confidence;
     }
     
-    // Default confidence if no data available
     return null;
   };
 
@@ -89,13 +86,17 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     if (analysis?.reason) {
       return analysis.reason;
     }
-    
-    return stock.aiAnalysis?.reason ?? stock.explanation ?? "Analysis not available";
+
+    // Access explanation from the stock object directly since it's in the database schema
+    const stockWithExplanation = stock as any;
+    return stock.aiAnalysis?.reason ?? stockWithExplanation.explanation ?? "Analysis not available";
   };
 
   const getPrimaryDrivers = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    if (Array.isArray(stock.primary_drivers) && stock.primary_drivers.length > 0) {
-      return stock.primary_drivers;
+    // Use the correct property name 'primaryDrivers' instead of 'primary_drivers'
+    const stockWithDrivers = stock as any;
+    if (Array.isArray(stockWithDrivers.primaryDrivers) && stockWithDrivers.primaryDrivers.length > 0) {
+      return stockWithDrivers.primaryDrivers;
     }
     
     return stock.aiAnalysis?.primaryDrivers ?? [];
