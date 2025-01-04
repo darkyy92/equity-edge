@@ -15,10 +15,27 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 };
 
-// Transform timeframe to match database constraints
+// Validate and transform timeframe to match database constraints
 const transformTimeframe = (timeframe: string): string => {
-  console.log('Transforming timeframe:', timeframe);
-  return timeframe.split('-')[0]; // 'short-term' -> 'short'
+  console.log('Input timeframe:', timeframe);
+  
+  // Map of valid transformations
+  const validTransforms = {
+    'short-term': 'short',
+    'medium-term': 'medium',
+    'long-term': 'long',
+    'short': 'short',
+    'medium': 'medium',
+    'long': 'long'
+  };
+
+  const transformed = validTransforms[timeframe];
+  if (!transformed) {
+    throw new Error(`Invalid timeframe: ${timeframe}. Must be one of: short-term, medium-term, long-term`);
+  }
+
+  console.log('Transformed timeframe:', transformed);
+  return transformed;
 };
 
 serve(async (req) => {
@@ -34,12 +51,13 @@ serve(async (req) => {
   try {
     const { timeframe = 'short-term' } = await req.json();
     const dbTimeframe = transformTimeframe(timeframe);
-    console.log('Processing request for timeframe:', timeframe, 'transformed to:', dbTimeframe);
+    console.log('Processing request for timeframe:', timeframe, '→', dbTimeframe);
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Check cache first
     const { data: cachedRecs, error: cacheError } = await supabase
       .from('stock_recommendations')
       .select('*')
@@ -52,6 +70,7 @@ serve(async (req) => {
       throw new Error(`Database error: ${cacheError.message}`);
     }
 
+    // Return cached data if fresh enough
     if (cachedRecs?.length > 0) {
       const mostRecent = new Date(cachedRecs[0].created_at);
       if (Date.now() - mostRecent.getTime() < 30 * 60 * 1000) {
@@ -63,6 +82,7 @@ serve(async (req) => {
       }
     }
 
+    // Set up timeout for OpenAI request
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
@@ -125,6 +145,7 @@ serve(async (req) => {
           throw new Error('Response is not an array');
         }
 
+        // Validate recommendation format
         recommendations.forEach((rec, index) => {
           if (!rec.symbol || !rec.reason || 
               typeof rec.confidence !== 'number' || 
@@ -134,12 +155,13 @@ serve(async (req) => {
           }
         });
 
+        // Store recommendations in database
         for (const rec of recommendations) {
           const { error: upsertError } = await supabase
             .from('stock_recommendations')
             .upsert({
               symbol: rec.symbol,
-              strategy_type: dbTimeframe, // Use transformed timeframe
+              strategy_type: dbTimeframe,
               explanation: rec.reason,
               confidence_metrics: { confidence: rec.confidence },
               [`${dbTimeframe}_term_analysis`]: {
