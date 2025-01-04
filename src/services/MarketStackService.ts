@@ -24,7 +24,8 @@ interface StockData {
 export class MarketStackService {
   static async getStockData(symbols: string[]): Promise<StockData[]> {
     try {
-      if (!import.meta.env.VITE_MARKETSTACK_API_KEY) {
+      const apiKey = import.meta.env.VITE_MARKETSTACK_API_KEY;
+      if (!apiKey) {
         console.error('MarketStack API key is not configured');
         throw new Error('MarketStack API key is not configured');
       }
@@ -32,15 +33,14 @@ export class MarketStackService {
       console.log('Fetching data from MarketStack for symbols:', symbols.join(','));
       
       // First try intraday endpoint
-      const intradayUrl = `https://api.marketstack.com/v2/intraday/latest?access_key=${import.meta.env.VITE_MARKETSTACK_API_KEY}&symbols=${symbols.join(',')}`;
-      console.log('Calling MarketStack API:', intradayUrl);
+      const intradayUrl = `https://api.marketstack.com/v2/intraday/latest?access_key=${apiKey}&symbols=${symbols.join(',')}`;
       
       const intradayResponse = await fetch(intradayUrl);
       
       if (!intradayResponse.ok) {
         const errorData = await intradayResponse.text();
         console.error('MarketStack API error:', errorData);
-        throw new Error('MarketStack intraday API request failed');
+        throw new Error(`MarketStack intraday API request failed: ${errorData}`);
       }
       
       const intradayData = await intradayResponse.json() as MarketStackResponse;
@@ -49,15 +49,14 @@ export class MarketStackService {
       // If no data from intraday, try EOD endpoint
       if (!intradayData.data || intradayData.data.length === 0) {
         console.log('No intraday data available, trying EOD endpoint');
-        const eodUrl = `https://api.marketstack.com/v2/eod/latest?access_key=${import.meta.env.VITE_MARKETSTACK_API_KEY}&symbols=${symbols.join(',')}`;
-        console.log('Calling MarketStack EOD API:', eodUrl);
+        const eodUrl = `https://api.marketstack.com/v2/eod/latest?access_key=${apiKey}&symbols=${symbols.join(',')}`;
         
         const eodResponse = await fetch(eodUrl);
         
         if (!eodResponse.ok) {
           const errorData = await eodResponse.text();
           console.error('MarketStack EOD API error:', errorData);
-          throw new Error('MarketStack EOD API request failed');
+          throw new Error(`MarketStack EOD API request failed: ${errorData}`);
         }
         
         const eodData = await eodResponse.json() as MarketStackResponse;
@@ -99,8 +98,7 @@ export class MarketStackService {
         console.log('Fetching individual data for symbols:', nullPriceSymbols.map(s => s.symbol));
         await Promise.all(nullPriceSymbols.map(async (stock) => {
           try {
-            const individualUrl = `https://api.marketstack.com/v2/tickers/${stock.symbol}/eod/latest?access_key=${import.meta.env.VITE_MARKETSTACK_API_KEY}`;
-            console.log('Calling MarketStack Individual API:', individualUrl);
+            const individualUrl = `https://api.marketstack.com/v2/tickers/${stock.symbol}/eod/latest?access_key=${apiKey}`;
             
             const response = await fetch(individualUrl);
             if (response.ok) {
