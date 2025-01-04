@@ -80,42 +80,6 @@ serve(async (req) => {
         }
       });
 
-      // Store recommendations in Supabase for caching
-      const { data: existingRecs, error: selectError } = await supabase
-        .from('stock_recommendations')
-        .select('*')
-        .eq('strategy_type', timeframe)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      // Only insert if we don't have recent recommendations (less than 30 minutes old)
-      const shouldInsert = !existingRecs?.length || 
-        (Date.now() - new Date(existingRecs[0].created_at).getTime() > 30 * 60 * 1000);
-
-      if (shouldInsert) {
-        await Promise.all(recommendations.map(async (rec: any) => {
-          const analysisField = `${timeframe.split('-')[0]}_term_analysis`;
-          
-          await supabase
-            .from('stock_recommendations')
-            .upsert({
-              symbol: rec.symbol,
-              strategy_type: timeframe,
-              [analysisField]: {
-                potentialGrowth: rec.potentialGrowth,
-                timeframe: timeframe
-              },
-              confidence_metrics: {
-                confidence: rec.confidence
-              },
-              explanation: rec.reason,
-              primary_drivers: rec.primaryDrivers
-            }, {
-              onConflict: 'symbol,strategy_type'
-            });
-        }));
-      }
-
     } catch (error) {
       console.error('Error processing AI recommendations:', error);
       throw new Error('Failed to process AI recommendations');
