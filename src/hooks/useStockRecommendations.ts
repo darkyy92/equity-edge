@@ -3,22 +3,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { StockTicker } from "@/lib/types/stock";
+import { MarketStackService } from "@/services/MarketStackService";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
 export const useStockRecommendations = (timeframe: TimeFrame) => {
   const queryClient = useQueryClient();
 
-  const transformToStockTicker = (recommendation: any): StockTicker => {
+  const transformToStockTicker = (recommendation: any, marketData: any = {}): StockTicker => {
     const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
     
     // Ensure we use the full company name from the recommendation data
     const fullName = recommendation.name || recommendation.company_name || recommendation.symbol;
     
+    // Find matching market data for this symbol
+    const stockMarketData = marketData.find((data: any) => data.symbol === recommendation.symbol);
+    
     return {
       ticker: recommendation.symbol,
       symbol: recommendation.symbol,
-      name: fullName, // Use the full company name
+      name: fullName,
       market: 'US',
       locale: 'us',
       primary_exchange: 'NYSE',
@@ -29,6 +33,12 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
       composite_figi: '',
       share_class_figi: '',
       last_updated_utc: new Date().toISOString(),
+      // Use real market data if available, otherwise use defaults
+      price: stockMarketData?.price || 0,
+      change: stockMarketData?.change || 0,
+      changePercent: stockMarketData?.changePercent || 0,
+      volume: stockMarketData?.volume || 0,
+      vwap: stockMarketData?.vwap || 0,
       fundamentalMetrics: recommendation.fundamental_metrics || null,
       technicalSignals: recommendation.technical_signals || null,
       marketContext: recommendation.market_context || null,
@@ -48,6 +58,7 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
       console.log('Fetching recommendations for timeframe:', timeframe);
       
       try {
+        // First, get the AI recommendations
         const { data: { data: functionResponse }, error: functionError } = await supabase.functions.invoke(
           'get-stock-recommendations',
           {
@@ -60,13 +71,29 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
           throw functionError;
         }
 
-        return functionResponse?.recommendations?.map(rec => transformToStockTicker(rec)) || [];
+        if (!functionResponse?.recommendations || functionResponse.recommendations.length === 0) {
+          return [];
+        }
+
+        // Extract symbols from recommendations
+        const symbols = functionResponse.recommendations.map((rec: any) => rec.symbol);
+
+        // Fetch real-time market data for all symbols
+        console.log('Fetching market data for symbols:', symbols);
+        const marketData = await MarketStackService.getStockData(symbols);
+        console.log('Received market data:', marketData);
+
+        // Transform recommendations with real market data
+        return functionResponse.recommendations.map((rec: any) => 
+          transformToStockTicker(rec, marketData)
+        );
+
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         throw error;
       }
     },
-    staleTime: 15 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // Cache for 15 minutes
     gcTime: 60 * 60 * 1000,
     retry: 1,
     refetchOnWindowFocus: false,
