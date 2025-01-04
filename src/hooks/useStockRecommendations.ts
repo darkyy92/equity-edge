@@ -12,10 +12,13 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
   const transformToStockTicker = (recommendation: any): StockTicker => {
     const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
     
+    // Ensure we use the full company name from the recommendation data
+    const fullName = recommendation.name || recommendation.company_name || recommendation.symbol;
+    
     return {
       ticker: recommendation.symbol,
       symbol: recommendation.symbol,
-      name: recommendation.name || recommendation.symbol,
+      name: fullName, // Use the full company name
       market: 'US',
       locale: 'us',
       primary_exchange: 'NYSE',
