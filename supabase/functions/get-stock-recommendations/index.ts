@@ -10,12 +10,17 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -37,6 +42,7 @@ serve(async (req) => {
 
     if (cacheError) {
       console.error('Error fetching cached recommendations:', cacheError);
+      throw cacheError;
     }
 
     // Use cached data if it's less than 30 minutes old
@@ -111,7 +117,7 @@ serve(async (req) => {
       }
       
       // Validate each recommendation
-      recommendations.forEach((rec: any, index: number) => {
+      recommendations.forEach((rec, index) => {
         console.log(`Validating recommendation ${index}:`, rec);
         
         if (!rec.symbol || !rec.reason || 
@@ -148,6 +154,7 @@ serve(async (req) => {
 
         if (upsertError) {
           console.error('Error upserting recommendation:', upsertError);
+          throw upsertError;
         }
       }
 
