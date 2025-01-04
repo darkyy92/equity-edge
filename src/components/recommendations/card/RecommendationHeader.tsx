@@ -39,7 +39,7 @@ export const RecommendationHeader = ({
           {name}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {symbol}
+          {symbol} • {name}
         </p>
       </div>
       <Button variant="ghost" size="icon" className="text-[#C6B67E]">
