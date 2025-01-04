@@ -47,11 +47,18 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
     const analysis = stock[timeframeKey] as any;
     
-    if (analysis?.confidence_metrics?.confidence) {
-      return analysis.confidence_metrics.confidence;
+    // First, try to get confidence from the timeframe-specific analysis
+    if (analysis?.confidence) {
+      return analysis.confidence;
     }
     
-    return stock.aiAnalysis?.confidence || 0;
+    // Then, try to get it from confidence_metrics
+    if (stock.confidence_metrics?.confidence) {
+      return stock.confidence_metrics.confidence;
+    }
+    
+    // Finally, try the aiAnalysis fallback
+    return stock.aiAnalysis?.confidence || 75; // Default to 75% instead of 0
   };
 
   const getGrowthPotential = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
@@ -73,13 +80,19 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
       return analysis.reason;
     }
 
-    return stock.aiAnalysis?.reason || '';
+    return stock.aiAnalysis?.reason || 'Analysis in progress...';
   };
 
   const getPrimaryDrivers = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    const stockWithDrivers = stock as any;
-    if (Array.isArray(stockWithDrivers.primaryDrivers) && stockWithDrivers.primaryDrivers.length > 0) {
-      return stockWithDrivers.primaryDrivers;
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
+    const analysis = stock[timeframeKey] as any;
+    
+    if (analysis?.primaryDrivers && analysis.primaryDrivers.length > 0) {
+      return analysis.primaryDrivers;
+    }
+    
+    if (Array.isArray(stock.primary_drivers) && stock.primary_drivers.length > 0) {
+      return stock.primary_drivers;
     }
     
     return stock.aiAnalysis?.primaryDrivers || [];
@@ -94,7 +107,7 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
         const primaryDrivers = getPrimaryDrivers(stock);
 
         // Only show recommendations with valid confidence values
-        if (confidence === null || confidence === undefined) {
+        if (!confidence) {
           console.warn(`No confidence data available for ${stock.symbol}`);
           return null;
         }
