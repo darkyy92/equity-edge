@@ -15,6 +15,12 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 };
 
+// Transform timeframe to match database constraints
+const transformTimeframe = (timeframe: string): string => {
+  console.log('Transforming timeframe:', timeframe);
+  return timeframe.split('-')[0]; // 'short-term' -> 'short'
+};
+
 serve(async (req) => {
   console.log('Request received:', req.method);
   
@@ -27,7 +33,8 @@ serve(async (req) => {
 
   try {
     const { timeframe = 'short-term' } = await req.json();
-    console.log('Processing request for timeframe:', timeframe);
+    const dbTimeframe = transformTimeframe(timeframe);
+    console.log('Processing request for timeframe:', timeframe, 'transformed to:', dbTimeframe);
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
@@ -36,7 +43,7 @@ serve(async (req) => {
     const { data: cachedRecs, error: cacheError } = await supabase
       .from('stock_recommendations')
       .select('*')
-      .eq('strategy_type', timeframe)
+      .eq('strategy_type', dbTimeframe)
       .order('created_at', { ascending: false })
       .limit(6);
 
@@ -106,7 +113,6 @@ serve(async (req) => {
 
       let recommendations;
       try {
-        // Clean the response content of any markdown formatting
         const content = aiData.choices[0].message.content
           .replace(/```json\n?/g, '')
           .replace(/```\n?/g, '')
@@ -133,12 +139,12 @@ serve(async (req) => {
             .from('stock_recommendations')
             .upsert({
               symbol: rec.symbol,
-              strategy_type: timeframe,
+              strategy_type: dbTimeframe, // Use transformed timeframe
               explanation: rec.reason,
               confidence_metrics: { confidence: rec.confidence },
-              [`${timeframe.split('-')[0]}_term_analysis`]: {
+              [`${dbTimeframe}_term_analysis`]: {
                 potentialGrowth: rec.potentialGrowth,
-                timeframe: timeframe
+                timeframe: dbTimeframe
               },
               primary_drivers: rec.primaryDrivers,
               updated_at: new Date().toISOString()
