@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCwIcon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
@@ -42,14 +43,25 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
     });
 
     try {
+      // First, invalidate the cache for the current timeframe
       await queryClient.invalidateQueries({ 
-        queryKey: ['recommendations'],
-        refetchType: 'active',
+        queryKey: ['recommendations', activeTab],
+        exact: true
       });
-      
+
+      // Force clear the cache in Supabase by calling the edge function with refresh flag
+      await supabase.functions.invoke('get-stock-recommendations', {
+        body: JSON.stringify({ 
+          timeframe: activeTab,
+          refresh: true 
+        }),
+      });
+
+      // Then refetch the data
       await queryClient.refetchQueries({ 
-        queryKey: ['recommendations'],
-        type: 'active',
+        queryKey: ['recommendations', activeTab],
+        exact: true,
+        type: 'active'
       });
 
       toast({
@@ -58,6 +70,7 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
         variant: "default",
       });
     } catch (error) {
+      console.error('Error refreshing data:', error);
       toast({
         title: "Error refreshing data",
         description: "Failed to refresh recommendations. Please try again.",

@@ -11,25 +11,28 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { timeframe = 'short-term' } = await req.json();
+    const { timeframe = 'short-term', refresh = false } = await req.json();
     const dbTimeframe = transformTimeframe(timeframe);
-    console.log('Processing request for timeframe:', timeframe, '→', dbTimeframe);
+    console.log('Processing request for timeframe:', timeframe, '→', dbTimeframe, 'refresh:', refresh);
 
-    // Check cache first
-    const cachedRecs = await getCachedRecommendations(dbTimeframe);
+    // Only check cache if refresh is false
+    if (!refresh) {
+      const cachedRecs = await getCachedRecommendations(dbTimeframe);
 
-    // Return cached data if fresh enough
-    if (cachedRecs?.length > 0) {
-      const mostRecent = new Date(cachedRecs[0].created_at);
-      if (Date.now() - mostRecent.getTime() < 30 * 60 * 1000) {
-        console.log('Returning cached recommendations');
-        return new Response(
-          JSON.stringify({ data: { recommendations: cachedRecs } }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      // Return cached data if fresh enough and not forcing refresh
+      if (cachedRecs?.length > 0) {
+        const mostRecent = new Date(cachedRecs[0].created_at);
+        if (Date.now() - mostRecent.getTime() < 30 * 60 * 1000) {
+          console.log('Returning cached recommendations');
+          return new Response(
+            JSON.stringify({ data: { recommendations: cachedRecs } }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
     }
 
+    console.log('Getting fresh recommendations from OpenAI');
     // Get new recommendations from OpenAI
     const recommendations = await getAIRecommendations(timeframe);
     
