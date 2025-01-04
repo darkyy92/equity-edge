@@ -35,10 +35,10 @@ export const RecommendationHeader = ({
             {confidence}% Confidence
           </Badge>
         </div>
-        <h3 className="text-lg font-semibold line-clamp-1" title={symbol}>
+        <h3 className="text-lg font-semibold line-clamp-1" title={`${symbol} - ${name}`}>
           {symbol}
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground line-clamp-1" title={name}>
           {name}
         </p>
       </div>
