@@ -45,7 +45,7 @@ serve(async (req) => {
       if (Date.now() - mostRecent.getTime() < 30 * 60 * 1000) {
         console.log('Returning cached recommendations');
         return new Response(
-          JSON.stringify({ recommendations: cachedRecs }),
+          JSON.stringify({ data: { recommendations: cachedRecs } }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -72,52 +72,63 @@ serve(async (req) => {
               "primaryDrivers": string[] (3-4 key factors)
             }
             Focus on diverse sectors and both established and promising companies. Return only the raw JSON array.`
-          },
-          {
-            role: 'user',
-            content: `Generate 6 diverse ${timeframe} stock recommendations based on current market conditions and opportunities.`
           }
         ],
         temperature: 0.7,
+        max_tokens: 1000,
       }),
     });
 
     if (!aiResponse.ok) {
-      console.error('OpenAI API error:', await aiResponse.text());
-      throw new Error('Failed to get AI recommendations');
+      const errorText = await aiResponse.text();
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('OpenAI API response:', aiData);
+    console.log('OpenAI API response received');
 
     if (!aiData.choices?.[0]?.message?.content) {
+      console.error('Invalid AI response format:', aiData);
       throw new Error('Invalid AI response format');
     }
 
     let recommendations;
     try {
       const content = aiData.choices[0].message.content.trim();
-      console.log('Parsing AI response content:', content);
-      recommendations = JSON.parse(content);
+      console.log('Raw AI response content:', content);
+      
+      // Try to extract JSON if the response contains additional text
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      const jsonContent = jsonMatch ? jsonMatch[0] : content;
+      
+      console.log('Attempting to parse JSON content:', jsonContent);
+      recommendations = JSON.parse(jsonContent);
       
       if (!Array.isArray(recommendations)) {
         console.error('Response is not an array:', recommendations);
         throw new Error('Response is not an array');
       }
       
+      // Validate each recommendation
       recommendations.forEach((rec: any, index: number) => {
-        if (!rec.symbol || !rec.reason || typeof rec.confidence !== 'number' || 
-            typeof rec.potentialGrowth !== 'number' || !Array.isArray(rec.primaryDrivers)) {
+        console.log(`Validating recommendation ${index}:`, rec);
+        
+        if (!rec.symbol || !rec.reason || 
+            typeof rec.confidence !== 'number' || 
+            typeof rec.potentialGrowth !== 'number' || 
+            !Array.isArray(rec.primaryDrivers)) {
           console.error('Invalid recommendation format at index', index, ':', rec);
           throw new Error(`Invalid recommendation format at index ${index}`);
         }
       });
 
       // Store recommendations in Supabase
-      await Promise.all(recommendations.map(async (rec: any) => {
+      console.log('Storing recommendations in database');
+      for (const rec of recommendations) {
         const analysisField = `${timeframe.split('-')[0]}_term_analysis`;
         
-        await supabase
+        const { error: upsertError } = await supabase
           .from('stock_recommendations')
           .upsert({
             symbol: rec.symbol,
@@ -134,15 +145,21 @@ serve(async (req) => {
           }, {
             onConflict: 'symbol,strategy_type'
           });
-      }));
+
+        if (upsertError) {
+          console.error('Error upserting recommendation:', upsertError);
+        }
+      }
 
     } catch (error) {
       console.error('Error processing AI recommendations:', error);
+      console.error('Failed content:', aiData.choices[0].message.content);
       throw new Error('Failed to process AI recommendations');
     }
 
+    console.log('Successfully processed recommendations');
     return new Response(
-      JSON.stringify({ recommendations }),
+      JSON.stringify({ data: { recommendations } }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
