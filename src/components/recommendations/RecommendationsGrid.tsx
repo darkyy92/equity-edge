@@ -33,17 +33,7 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     );
   }
 
-  if (!recommendations) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <StockCardSkeleton key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  if (recommendations.length === 0) {
+  if (!recommendations || recommendations.length === 0) {
     return (
       <Card className="p-8 text-center bg-background/95 backdrop-blur-lg border-border/50">
         <TrendingUpIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -61,11 +51,7 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
       return analysis.confidence_metrics.confidence;
     }
     
-    if (stock.aiAnalysis?.confidence) {
-      return stock.aiAnalysis.confidence;
-    }
-    
-    return null;
+    return stock.aiAnalysis?.confidence || 0;
   };
 
   const getGrowthPotential = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
@@ -76,7 +62,7 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
       return analysis.potentialGrowth;
     }
     
-    return stock.aiAnalysis?.potentialGrowth ?? 0;
+    return stock.aiAnalysis?.potentialGrowth || 0;
   };
 
   const getReason = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
@@ -87,19 +73,16 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
       return analysis.reason;
     }
 
-    // Access explanation from the stock object directly since it's in the database schema
-    const stockWithExplanation = stock as any;
-    return stock.aiAnalysis?.reason ?? stockWithExplanation.explanation ?? "Analysis not available";
+    return stock.aiAnalysis?.reason || '';
   };
 
   const getPrimaryDrivers = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    // Use the correct property name 'primaryDrivers' instead of 'primary_drivers'
     const stockWithDrivers = stock as any;
     if (Array.isArray(stockWithDrivers.primaryDrivers) && stockWithDrivers.primaryDrivers.length > 0) {
       return stockWithDrivers.primaryDrivers;
     }
     
-    return stock.aiAnalysis?.primaryDrivers ?? [];
+    return stock.aiAnalysis?.primaryDrivers || [];
   };
 
   return (
@@ -110,7 +93,8 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
         const reason = getReason(stock);
         const primaryDrivers = getPrimaryDrivers(stock);
 
-        if (!confidence) {
+        // Only show recommendations with valid confidence values
+        if (confidence === null || confidence === undefined) {
           console.warn(`No confidence data available for ${stock.symbol}`);
           return null;
         }

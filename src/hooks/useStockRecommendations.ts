@@ -9,31 +9,35 @@ type TimeFrame = "short-term" | "medium-term" | "long-term";
 export const useStockRecommendations = (timeframe: TimeFrame) => {
   const queryClient = useQueryClient();
 
-  const transformToStockTicker = (recommendation: any): StockTicker => ({
-    ticker: recommendation.symbol,
-    symbol: recommendation.symbol,
-    name: recommendation.name || recommendation.symbol,
-    market: 'US',
-    locale: 'us',
-    primary_exchange: 'NYSE',
-    type: 'CS',
-    active: true,
-    currency_name: 'USD',
-    cik: '',
-    composite_figi: '',
-    share_class_figi: '',
-    last_updated_utc: new Date().toISOString(),
-    fundamentalMetrics: recommendation.fundamental_metrics,
-    technicalSignals: recommendation.technical_signals,
-    marketContext: recommendation.market_context,
-    primaryDrivers: recommendation.primary_drivers || [],
-    aiAnalysis: {
-      potentialGrowth: recommendation[`${timeframe.split('-')[0]}_term_analysis`]?.potentialGrowth || 0,
-      confidence: recommendation.confidence_metrics?.confidence || 75,
-      reason: recommendation.explanation || 'No analysis available at this time',
-      primaryDrivers: recommendation.primary_drivers || []
-    }
-  });
+  const transformToStockTicker = (recommendation: any): StockTicker => {
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
+    
+    return {
+      ticker: recommendation.symbol,
+      symbol: recommendation.symbol,
+      name: recommendation.name || recommendation.symbol,
+      market: 'US',
+      locale: 'us',
+      primary_exchange: 'NYSE',
+      type: 'CS',
+      active: true,
+      currency_name: 'USD',
+      cik: '',
+      composite_figi: '',
+      share_class_figi: '',
+      last_updated_utc: new Date().toISOString(),
+      fundamentalMetrics: recommendation.fundamental_metrics || null,
+      technicalSignals: recommendation.technical_signals || null,
+      marketContext: recommendation.market_context || null,
+      primaryDrivers: recommendation.primary_drivers || [],
+      aiAnalysis: {
+        potentialGrowth: recommendation[timeframeKey]?.potentialGrowth || 0,
+        confidence: recommendation.confidence_metrics?.confidence || 0,
+        reason: recommendation.explanation || '',
+        primaryDrivers: recommendation.primary_drivers || []
+      }
+    };
+  };
 
   const { data: recommendations, isLoading, error } = useQuery({
     queryKey: ['recommendations', timeframe],
