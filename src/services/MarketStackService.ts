@@ -1,98 +1,60 @@
-const API_KEY = '959d63ed3d8e994a24448aad1ccc8787';
-const BASE_URL = 'https://api.marketstack.com/v2';
-
-interface MarketStackResponse {
-  pagination: {
-    limit: number;
-    offset: number;
-    count: number;
-    total: number;
-  };
-  data: Array<{
-    symbol: string;
-    date: string;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume: number;
-    exchange: string;
-    last: number;
-  }>;
-}
-
 export class MarketStackService {
   static async getStockData(symbols: string[]) {
     try {
-      // Log the API request for debugging
-      console.log(`Fetching data from MarketStack for symbols: ${symbols.join(',')}`);
+      console.log('Fetching data from MarketStack for symbols:', symbols.join(','));
       
-      const response = await fetch(
-        `${BASE_URL}/intraday/latest?access_key=${API_KEY}&symbols=${symbols.join(',')}&interval=1min`
-      );
-
+      const response = await fetch(`https://api.marketstack.com/v2/intraday/latest?access_key=${process.env.VITE_MARKETSTACK_API_KEY}&symbols=${symbols.join(',')}`);
+      
       if (!response.ok) {
-        console.error('MarketStack API Error:', response.status, response.statusText);
-        throw new Error('Failed to fetch stock data');
+        throw new Error('MarketStack API request failed');
       }
-
-      const data = await response.json() as MarketStackResponse;
       
-      if (!data.data || data.data.length === 0) {
-        console.error('No data returned from MarketStack API');
-        return [];
-      }
-
-      // Log the received data for debugging
+      const data = await response.json();
       console.log('MarketStack API response:', data);
 
-      return data.data.map((stock) => ({
-        symbol: stock.symbol,
-        price: stock.last || stock.close,
-        change: stock.last ? stock.last - stock.open : stock.close - stock.open,
-        changePercent: ((stock.last || stock.close) - stock.open) / stock.open * 100,
-        volume: stock.volume,
-        vwap: (stock.high + stock.low + (stock.last || stock.close)) / 3 // Calculate VWAP
-      }));
+      // Create a map of all requested symbols with default values
+      const stocksMap = symbols.reduce((acc, symbol) => {
+        acc[symbol] = {
+          symbol,
+          price: null,
+          change: null,
+          changePercent: null,
+          volume: null,
+          vwap: null
+        };
+        return acc;
+      }, {});
 
-    } catch (error) {
-      console.error('Error in getStockData:', error);
-      // Return empty array instead of throwing to prevent UI breakage
-      return [];
-    }
-  }
+      // Update the map with actual data for stocks that were returned
+      data.data.forEach((stock: any) => {
+        if (stock.symbol) {
+          stocksMap[stock.symbol] = {
+            symbol: stock.symbol,
+            price: stock.close || stock.last || 0,
+            change: (stock.close || stock.last || 0) - (stock.open || 0),
+            changePercent: ((stock.close || stock.last || 0) - (stock.open || 0)) / (stock.open || 1) * 100,
+            volume: stock.volume || 0,
+            vwap: stock.mid || 0
+          };
+        }
+      });
 
-  static async getDailyPrices(symbol: string, days: number = 1) {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/eod?access_key=${API_KEY}&symbols=${symbol}&limit=${days}`
-      );
-
-      if (!response.ok) {
-        console.error('MarketStack API Error:', response.status, response.statusText);
-        throw new Error('Failed to fetch daily prices');
-      }
-
-      const data = await response.json() as MarketStackResponse;
+      // Convert map back to array
+      const transformedData = Object.values(stocksMap);
+      console.log('Received market data:', transformedData);
       
-      if (!data.data || data.data.length === 0) {
-        console.error('No data returned from MarketStack API');
-        return [];
-      }
-
-      return data.data.map((price) => ({
-        date: new Date(price.date),
-        open: price.open,
-        high: price.high,
-        low: price.low,
-        close: price.last || price.close,
-        volume: price.volume,
-        vwap: (price.high + price.low + (price.last || price.close)) / 3
-      }));
-
+      return transformedData;
     } catch (error) {
-      console.error('Error in getDailyPrices:', error);
-      return [];
+      console.error('Error fetching stock data:', error);
+      // Return default data for all requested symbols
+      return symbols.map(symbol => ({
+        symbol,
+        price: 0,
+        change: 0,
+        changePercent: 0,
+        volume: 0,
+        vwap: 0
+      }));
     }
   }
 }

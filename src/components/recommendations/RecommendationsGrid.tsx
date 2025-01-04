@@ -47,18 +47,15 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
     const analysis = stock[timeframeKey] as any;
     
-    // First, try to get confidence from the timeframe-specific analysis
     if (analysis?.confidence) {
       return analysis.confidence;
     }
     
-    // Then, try to get it from confidence_metrics
     if (stock.confidence_metrics?.confidence) {
       return stock.confidence_metrics.confidence;
     }
     
-    // Finally, try the aiAnalysis fallback
-    return stock.aiAnalysis?.confidence || 75; // Default to 75% instead of 0
+    return stock.aiAnalysis?.confidence || 75;
   };
 
   const getGrowthPotential = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
@@ -87,15 +84,23 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
     const analysis = stock[timeframeKey] as any;
     
+    // First try to get from timeframe-specific analysis
     if (analysis?.primaryDrivers && analysis.primaryDrivers.length > 0) {
       return analysis.primaryDrivers;
     }
     
+    // Then try to get from primary_drivers array
     if (Array.isArray(stock.primary_drivers) && stock.primary_drivers.length > 0) {
       return stock.primary_drivers;
     }
     
-    return stock.aiAnalysis?.primaryDrivers || [];
+    // Finally try to get from aiAnalysis
+    if (stock.aiAnalysis?.primaryDrivers && stock.aiAnalysis.primaryDrivers.length > 0) {
+      return stock.aiAnalysis.primaryDrivers;
+    }
+    
+    // Return empty array if no drivers found
+    return [];
   };
 
   return (
