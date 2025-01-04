@@ -24,8 +24,11 @@ interface MarketStackResponse {
 export class MarketStackService {
   static async getStockData(symbols: string[]) {
     try {
+      // Log the API request for debugging
+      console.log(`Fetching data from MarketStack for symbols: ${symbols.join(',')}`);
+      
       const response = await fetch(
-        `${BASE_URL}/intraday?access_key=${API_KEY}&symbols=${symbols.join(',')}&interval=15min&limit=1`
+        `${BASE_URL}/intraday/latest?access_key=${API_KEY}&symbols=${symbols.join(',')}&interval=1min`
       );
 
       if (!response.ok) {
@@ -40,17 +43,21 @@ export class MarketStackService {
         return [];
       }
 
+      // Log the received data for debugging
+      console.log('MarketStack API response:', data);
+
       return data.data.map((stock) => ({
         symbol: stock.symbol,
         price: stock.last || stock.close,
-        change: (stock.last || stock.close) - stock.open,
+        change: stock.last ? stock.last - stock.open : stock.close - stock.open,
         changePercent: ((stock.last || stock.close) - stock.open) / stock.open * 100,
         volume: stock.volume,
-        vwap: stock.close // Using close as VWAP since intraday doesn't provide VWAP
+        vwap: (stock.high + stock.low + (stock.last || stock.close)) / 3 // Calculate VWAP
       }));
 
     } catch (error) {
       console.error('Error in getStockData:', error);
+      // Return empty array instead of throwing to prevent UI breakage
       return [];
     }
   }
@@ -58,7 +65,7 @@ export class MarketStackService {
   static async getDailyPrices(symbol: string, days: number = 1) {
     try {
       const response = await fetch(
-        `${BASE_URL}/intraday?access_key=${API_KEY}&symbols=${symbol}&interval=15min&limit=${days * 28}` // 28 15-min intervals in a trading day
+        `${BASE_URL}/eod?access_key=${API_KEY}&symbols=${symbol}&limit=${days}`
       );
 
       if (!response.ok) {
@@ -80,7 +87,7 @@ export class MarketStackService {
         low: price.low,
         close: price.last || price.close,
         volume: price.volume,
-        vwap: price.close // Using close as VWAP since intraday doesn't provide VWAP
+        vwap: (price.high + price.low + (price.last || price.close)) / 3
       }));
 
     } catch (error) {
