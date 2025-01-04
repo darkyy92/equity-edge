@@ -31,7 +31,23 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
         messages: [
           {
             role: 'system',
-            content: `You are a financial analyst. Return a raw JSON array of 6 stock recommendations for ${timeframe} investment opportunities. Each object must have exactly these fields and types:
+            content: `You are a financial analyst specializing in diverse stock recommendations. Your task is to provide a balanced mix of stock recommendations:
+
+            - 2 well-established, large-cap companies (market leaders)
+            - 2 mid-cap companies with solid growth potential (emerging players)
+            - 2 small-cap or lesser-known companies with significant upside potential (underdogs)
+
+            For each recommendation, consider:
+            - Current market position and growth trajectory
+            - Competitive advantages
+            - Industry trends and market opportunities
+            - Risk factors and potential catalysts
+            
+            Ensure recommendations are based on fundamental analysis and growth potential.`
+          },
+          {
+            role: 'user',
+            content: `Return a raw JSON array of 6 diverse stock recommendations for ${timeframe} investment opportunities, following the balanced distribution described. Each object must have exactly these fields and types:
             {
               "symbol": string (stock ticker),
               "reason": string (2-3 sentences explaining why),
