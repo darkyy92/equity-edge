@@ -27,11 +27,6 @@ interface StockRecommendation {
   valor_number?: string;
 }
 
-/**
- * Custom hook for fetching and managing stock recommendations
- * @param timeframe The investment timeframe (short-term, medium-term, long-term)
- * @returns Object containing recommendations data, loading state, and error state
- */
 export const useStockRecommendations = (timeframe: TimeFrame) => {
   const queryClient = useQueryClient();
 
@@ -71,12 +66,16 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
   const { data: recommendations, isLoading, error } = useQuery({
     queryKey: ['recommendations', timeframe],
     queryFn: async () => {
+      console.log('Fetching recommendations for timeframe:', timeframe);
+      
       const { data: cachedRecommendations, error: dbError } = await supabase
         .from('stock_recommendations')
         .select('*')
-        .eq('strategy_type', timeframe.split('-')[0])
+        .eq('strategy_type', timeframe)  // Changed this line to use full timeframe
         .order('updated_at', { ascending: false })
         .limit(6);
+
+      console.log('Query results:', { cachedRecommendations, dbError });
 
       if (dbError) throw dbError;
 
@@ -93,6 +92,7 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
   });
 
   if (error) {
+    console.error('Error in useStockRecommendations:', error);
     toast({
       title: "Error loading recommendations",
       description: "Unable to fetch stock recommendations. Please try again later.",
