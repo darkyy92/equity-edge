@@ -3,13 +3,12 @@ import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import RecommendationsGrid from "./RecommendationsGrid";
+import { useStockRecommendations } from "@/hooks/useStockRecommendations";
 import { toast } from "@/components/ui/use-toast";
 
-type TimeFrame = "short-term" | "medium-term" | "long-term";
-
 interface RecommendationTabsProps {
-  activeTab: TimeFrame;
-  setActiveTab: (tab: TimeFrame) => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
   recommendations: any[];
   isLoading: boolean;
 }
