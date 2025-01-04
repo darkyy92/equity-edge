@@ -4,6 +4,7 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 export interface StockRecommendation {
   symbol: string;
+  name: string;  // Added company name field
   reason: string;
   confidence: number;
   potentialGrowth: number;
@@ -37,7 +38,9 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
             - 2 mid-cap companies with solid growth potential (emerging players)
             - 2 small-cap or lesser-known companies with significant upside potential (underdogs)
 
-            For each recommendation, consider:
+            For each recommendation, include:
+            - The stock symbol
+            - The full legal company name
             - Current market position and growth trajectory
             - Competitive advantages
             - Industry trends and market opportunities
@@ -50,6 +53,7 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
             content: `Return a raw JSON array of 6 diverse stock recommendations for ${timeframe} investment opportunities, following the balanced distribution described. Each object must have exactly these fields and types:
             {
               "symbol": string (stock ticker),
+              "name": string (full legal company name),
               "reason": string (2-3 sentences explaining why),
               "confidence": number (0-100),
               "potentialGrowth": number (expected percentage growth),

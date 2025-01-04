@@ -15,12 +15,14 @@ export const upsertRecommendations = async (recommendations: StockRecommendation
       .from('stock_recommendations')
       .upsert({
         symbol: rec.symbol,
+        name: rec.name, // Store the company name
         strategy_type: dbTimeframe,
         explanation: rec.reason,
         confidence_metrics: { confidence: rec.confidence },
         [`${dbTimeframe}_term_analysis`]: {
           potentialGrowth: rec.potentialGrowth,
-          timeframe: dbTimeframe
+          timeframe: dbTimeframe,
+          company_name: rec.name // Also store in the analysis object for backwards compatibility
         },
         primary_drivers: rec.primaryDrivers,
         updated_at: new Date().toISOString()
