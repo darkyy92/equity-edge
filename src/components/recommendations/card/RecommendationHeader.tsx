@@ -35,8 +35,12 @@ export const RecommendationHeader = ({
             {confidence}% Confidence
           </Badge>
         </div>
-        <h3 className="text-lg font-semibold">{name}</h3>
-        <p className="text-sm text-muted-foreground">{symbol}</p>
+        <h3 className="text-lg font-semibold line-clamp-1" title={name}>
+          {name}
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {symbol}
+        </p>
       </div>
       <Button variant="ghost" size="icon" className="text-[#C6B67E]">
         <StarIcon className="h-4 w-4" />
