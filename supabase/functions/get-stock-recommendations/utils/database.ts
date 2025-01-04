@@ -8,8 +8,10 @@ const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 export const upsertRecommendations = async (recommendations: StockRecommendation[], dbTimeframe: Timeframe) => {
+  console.log('Upserting recommendations:', { count: recommendations.length, timeframe: dbTimeframe });
+  
   for (const rec of recommendations) {
-    const { error: upsertError } = await supabase
+    const { data, error } = await supabase
       .from('stock_recommendations')
       .upsert({
         symbol: rec.symbol,
@@ -26,14 +28,18 @@ export const upsertRecommendations = async (recommendations: StockRecommendation
         onConflict: 'symbol,strategy_type'
       });
 
-    if (upsertError) {
-      console.error('Database error:', upsertError);
-      throw new Error(`Database error: ${upsertError.message}`);
+    if (error) {
+      console.error('Database error during upsert:', error);
+      throw new Error(`Database error: ${error.message}`);
     }
+    
+    console.log('Successfully upserted recommendation for:', rec.symbol);
   }
 };
 
 export const getCachedRecommendations = async (dbTimeframe: Timeframe) => {
+  console.log('Fetching cached recommendations for timeframe:', dbTimeframe);
+  
   const { data: cachedRecs, error: cacheError } = await supabase
     .from('stock_recommendations')
     .select('*')
@@ -42,9 +48,10 @@ export const getCachedRecommendations = async (dbTimeframe: Timeframe) => {
     .limit(6);
 
   if (cacheError) {
-    console.error('Database error:', cacheError);
+    console.error('Database error during cache fetch:', cacheError);
     throw new Error(`Database error: ${cacheError.message}`);
   }
 
+  console.log('Found cached recommendations:', { count: cachedRecs?.length });
   return cachedRecs;
 };
