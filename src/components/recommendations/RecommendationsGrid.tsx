@@ -26,14 +26,26 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <StockCardSkeleton key={i} />
         ))}
       </div>
     );
   }
 
-  if (!recommendations || recommendations.length === 0) {
+  // Show loading state while recommendations are being fetched
+  if (!recommendations) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <StockCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  // Only show no recommendations message if array is explicitly empty
+  if (recommendations.length === 0) {
     return (
       <Card className="p-8 text-center bg-background/95 backdrop-blur-lg border-border/50">
         <TrendingUpIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
