@@ -18,7 +18,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log('Request received:', req.method);
   
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       status: 204,
@@ -34,7 +33,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Check for recent cached recommendations with error handling
+    // Check for recent cached recommendations
     const { data: cachedRecs, error: cacheError } = await supabase
       .from('stock_recommendations')
       .select('*')
@@ -47,7 +46,6 @@ serve(async (req) => {
       throw new Error(`Database error: ${cacheError.message}`);
     }
 
-    // Use cached data if it's less than 30 minutes old
     if (cachedRecs?.length > 0) {
       const mostRecent = new Date(cachedRecs[0].created_at);
       if (Date.now() - mostRecent.getTime() < 30 * 60 * 1000) {
@@ -59,9 +57,8 @@ serve(async (req) => {
       }
     }
 
-    // Set up timeout for OpenAI request
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
       console.log('Fetching AI recommendations');
@@ -83,8 +80,7 @@ serve(async (req) => {
                 "confidence": number (0-100),
                 "potentialGrowth": number (expected percentage growth),
                 "primaryDrivers": string[] (3-4 key factors)
-              }
-              Focus on diverse sectors and both established and promising companies. Return only the raw JSON array.`
+              }`
             }
           ],
           temperature: 0.7,
@@ -111,15 +107,13 @@ serve(async (req) => {
       let recommendations;
       try {
         const content = aiData.choices[0].message.content.trim();
-        const jsonMatch = content.match(/\[[\s\S]*\]/);
-        const jsonContent = jsonMatch ? jsonMatch[0] : content;
-        
-        recommendations = JSON.parse(jsonContent);
+        recommendations = JSON.parse(content);
         
         if (!Array.isArray(recommendations)) {
           throw new Error('Response is not an array');
         }
-        
+
+        // Validate each recommendation
         recommendations.forEach((rec, index) => {
           if (!rec.symbol || !rec.reason || 
               typeof rec.confidence !== 'number' || 
@@ -131,24 +125,19 @@ serve(async (req) => {
 
         // Store recommendations in Supabase
         for (const rec of recommendations) {
-          const analysisField = `${timeframe.split('-')[0]}_term_analysis`;
-          
           const { error: upsertError } = await supabase
             .from('stock_recommendations')
             .upsert({
               symbol: rec.symbol,
               strategy_type: timeframe,
-              [analysisField]: {
+              explanation: rec.reason,
+              confidence_metrics: { confidence: rec.confidence },
+              [`${timeframe.split('-')[0]}_term_analysis`]: {
                 potentialGrowth: rec.potentialGrowth,
                 timeframe: timeframe
               },
-              confidence_metrics: {
-                confidence: rec.confidence
-              },
-              explanation: rec.reason,
-              primary_drivers: rec.primaryDrivers
-            }, {
-              onConflict: 'symbol,strategy_type'
+              primary_drivers: rec.primaryDrivers,
+              updated_at: new Date().toISOString()
             });
 
           if (upsertError) {
@@ -157,15 +146,15 @@ serve(async (req) => {
           }
         }
 
+        return new Response(
+          JSON.stringify({ data: { recommendations } }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+
       } catch (error) {
         console.error('Error processing recommendations:', error);
         throw new Error(`Failed to process recommendations: ${error.message}`);
       }
-
-      return new Response(
-        JSON.stringify({ data: { recommendations } }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
 
     } catch (error) {
       if (error.name === 'AbortError') {
