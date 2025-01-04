@@ -96,15 +96,19 @@ serve(async (req) => {
 
     let recommendations;
     try {
-      recommendations = JSON.parse(aiData.choices[0].message.content);
+      const content = aiData.choices[0].message.content.trim();
+      console.log('Parsing AI response content:', content);
+      recommendations = JSON.parse(content);
       
       if (!Array.isArray(recommendations)) {
+        console.error('Response is not an array:', recommendations);
         throw new Error('Response is not an array');
       }
       
       recommendations.forEach((rec: any, index: number) => {
         if (!rec.symbol || !rec.reason || typeof rec.confidence !== 'number' || 
             typeof rec.potentialGrowth !== 'number' || !Array.isArray(rec.primaryDrivers)) {
+          console.error('Invalid recommendation format at index', index, ':', rec);
           throw new Error(`Invalid recommendation format at index ${index}`);
         }
       });
