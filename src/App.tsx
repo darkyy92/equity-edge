@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
 import StockAnalysis from "./pages/StockAnalysis";
 
@@ -34,7 +33,6 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Navigation />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/stock/:symbol" element={<StockAnalysis />} />
