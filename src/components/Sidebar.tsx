@@ -1,28 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
-import { BarChart2Icon, SearchIcon, Settings2Icon, StarIcon, LogOutIcon } from "lucide-react";
+import { BarChart2Icon, Settings2Icon, StarIcon, LogOutIcon } from "lucide-react";
 import { Button } from "./ui/button";
+import SearchBar from "./SearchBar";
 
 const Sidebar = () => {
   const location = useLocation();
 
   return (
     <div className="w-64 min-h-screen bg-background/95 border-r border-border p-4 flex flex-col">
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex items-center gap-2 mb-6">
         <img src="/lovable-uploads/c61bb094-f3cc-417b-8cbe-ccb9ad907c73.png" alt="Logo" className="w-8 h-8" />
         <span className="text-lg font-semibold text-[#C6B67E]">Equity Edge</span>
       </div>
 
-      <div className="space-y-2">
-        <Link to="/">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${location.pathname === '/' ? 'bg-accent' : ''}`}
-          >
-            <SearchIcon className="mr-2 h-4 w-4" />
-            Search stocks...
-          </Button>
-        </Link>
+      <div className="mb-6 px-1">
+        <SearchBar />
+      </div>
 
+      <div className="space-y-2">
         <Link to="/">
           <Button
             variant="ghost"

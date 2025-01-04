@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import SearchBar from "@/components/SearchBar";
 import { StockTicker } from "@/lib/types/stock";
 import RecommendationTabs from "@/components/recommendations/RecommendationTabs";
 import Sidebar from "@/components/Sidebar";
@@ -9,12 +8,11 @@ import { useStockRecommendations } from "@/hooks/useStockRecommendations";
  * Index Page Component
  * 
  * This component serves as the main dashboard page of the application.
- * It displays a search bar for finding stocks and recommendations organized by timeframe.
+ * It displays recommendations organized by timeframe with a sidebar for navigation.
  * 
  * Features:
- * - Stock search functionality
  * - Tabbed view of stock recommendations (short, medium, long term)
- * - Sidebar navigation
+ * - Sidebar navigation with integrated search
  * - Responsive layout
  */
 type TimeFrame = "short-term" | "medium-term" | "long-term";
@@ -29,7 +27,6 @@ const Index = () => {
       <div className="flex-1 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <h1 className="text-2xl font-semibold mb-6">Investment Dashboard</h1>
-          <SearchBar />
           <RecommendationTabs
             activeTab={activeTab}
             setActiveTab={setActiveTab}
