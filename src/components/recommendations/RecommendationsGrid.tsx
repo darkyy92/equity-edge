@@ -33,7 +33,6 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     );
   }
 
-  // Show loading state while recommendations are being fetched
   if (!recommendations) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -44,7 +43,6 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     );
   }
 
-  // Only show no recommendations message if array is explicitly empty
   if (recommendations.length === 0) {
     return (
       <Card className="p-8 text-center bg-background/95 backdrop-blur-lg border-border/50">
@@ -55,15 +53,66 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     );
   }
 
+  const getConfidence = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    // Get confidence from the specific timeframe analysis if available
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
+    const analysis = stock[timeframeKey] as any;
+    
+    if (analysis?.confidence_metrics?.confidence) {
+      return analysis.confidence_metrics.confidence;
+    }
+    
+    // Fallback to aiAnalysis if available
+    if (stock.aiAnalysis?.confidence) {
+      return stock.aiAnalysis.confidence;
+    }
+    
+    // Default confidence if no data available
+    return null;
+  };
+
+  const getGrowthPotential = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
+    const analysis = stock[timeframeKey] as any;
+    
+    if (analysis?.potentialGrowth) {
+      return analysis.potentialGrowth;
+    }
+    
+    return stock.aiAnalysis?.potentialGrowth ?? 0;
+  };
+
+  const getReason = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
+    const analysis = stock[timeframeKey] as any;
+    
+    if (analysis?.reason) {
+      return analysis.reason;
+    }
+    
+    return stock.aiAnalysis?.reason ?? stock.explanation ?? "Analysis not available";
+  };
+
+  const getPrimaryDrivers = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    if (Array.isArray(stock.primary_drivers) && stock.primary_drivers.length > 0) {
+      return stock.primary_drivers;
+    }
+    
+    return stock.aiAnalysis?.primaryDrivers ?? [];
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {recommendations.map((stock) => {
-        const analysis = stock.aiAnalysis;
-        
-        const growthPotential = analysis?.potentialGrowth ?? 0;
-        const confidence = analysis?.confidence ?? 75;
-        const reason = analysis?.reason ?? "Analysis not available";
-        const primaryDrivers = analysis?.primaryDrivers ?? [];
+        const confidence = getConfidence(stock);
+        const growthPotential = getGrowthPotential(stock);
+        const reason = getReason(stock);
+        const primaryDrivers = getPrimaryDrivers(stock);
+
+        if (!confidence) {
+          console.warn(`No confidence data available for ${stock.symbol}`);
+          return null;
+        }
 
         return (
           <RecommendationCard
