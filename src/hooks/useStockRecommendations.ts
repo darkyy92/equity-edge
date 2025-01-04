@@ -13,8 +13,20 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
   const transformToStockTicker = (recommendation: any, marketData: any = {}): StockTicker => {
     const timeframeKey = `${timeframe.split('-')[0]}_term_analysis`;
     
-    // Ensure we use the full company name from the recommendation data
-    const fullName = recommendation.name || recommendation.company_name || recommendation.symbol;
+    // Get the company name from the recommendation data
+    // First try to get it from the recommendation object directly
+    let companyName = recommendation.name || recommendation.company_name;
+    
+    // If not found, try to get it from the timeframe analysis
+    if (!companyName && recommendation[timeframeKey]?.company_name) {
+      companyName = recommendation[timeframeKey].company_name;
+    }
+    
+    // If still not found, use a fallback with the symbol
+    if (!companyName) {
+      console.warn(`No company name found for symbol ${recommendation.symbol}`);
+      companyName = `${recommendation.symbol} Stock`;
+    }
     
     // Find matching market data for this symbol
     const stockMarketData = marketData.find((data: any) => data.symbol === recommendation.symbol);
@@ -22,7 +34,7 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
     return {
       ticker: recommendation.symbol,
       symbol: recommendation.symbol,
-      name: fullName,
+      name: companyName,
       market: 'US',
       locale: 'us',
       primary_exchange: 'NYSE',
