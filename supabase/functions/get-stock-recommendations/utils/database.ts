@@ -8,21 +8,29 @@ const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 export const upsertRecommendations = async (recommendations: StockRecommendation[], dbTimeframe: Timeframe) => {
-  console.log('Upserting recommendations:', { count: recommendations.length, timeframe: dbTimeframe });
+  console.log('[Database] Upserting recommendations:', { 
+    count: recommendations.length, 
+    timeframe: dbTimeframe 
+  });
   
   for (const rec of recommendations) {
+    console.log(`[Database] Processing recommendation for ${rec.symbol}:`, {
+      name: rec.name,
+      timeframe: dbTimeframe
+    });
+
     const { data, error } = await supabase
       .from('stock_recommendations')
       .upsert({
         symbol: rec.symbol,
-        name: rec.name, // Store the company name
+        name: rec.name,
         strategy_type: dbTimeframe,
         explanation: rec.reason,
         confidence_metrics: { confidence: rec.confidence },
         [`${dbTimeframe}_term_analysis`]: {
           potentialGrowth: rec.potentialGrowth,
           timeframe: dbTimeframe,
-          company_name: rec.name // Also store in the analysis object for backwards compatibility
+          company_name: rec.name
         },
         primary_drivers: rec.primaryDrivers,
         updated_at: new Date().toISOString()
@@ -31,16 +39,16 @@ export const upsertRecommendations = async (recommendations: StockRecommendation
       });
 
     if (error) {
-      console.error('Database error during upsert:', error);
+      console.error('[Database] Error during upsert:', error);
       throw new Error(`Database error: ${error.message}`);
     }
     
-    console.log('Successfully upserted recommendation for:', rec.symbol);
+    console.log(`[Database] Successfully upserted recommendation for: ${rec.symbol}`);
   }
 };
 
 export const getCachedRecommendations = async (dbTimeframe: Timeframe) => {
-  console.log('Fetching cached recommendations for timeframe:', dbTimeframe);
+  console.log('[Database] Fetching cached recommendations for timeframe:', dbTimeframe);
   
   const { data: cachedRecs, error: cacheError } = await supabase
     .from('stock_recommendations')
@@ -50,10 +58,17 @@ export const getCachedRecommendations = async (dbTimeframe: Timeframe) => {
     .limit(6);
 
   if (cacheError) {
-    console.error('Database error during cache fetch:', cacheError);
+    console.error('[Database] Error during cache fetch:', cacheError);
     throw new Error(`Database error: ${cacheError.message}`);
   }
 
-  console.log('Found cached recommendations:', { count: cachedRecs?.length });
+  console.log('[Database] Found cached recommendations:', { 
+    count: cachedRecs?.length,
+    recommendations: cachedRecs?.map(rec => ({
+      symbol: rec.symbol,
+      name: rec.name
+    }))
+  });
+  
   return cachedRecs;
 };

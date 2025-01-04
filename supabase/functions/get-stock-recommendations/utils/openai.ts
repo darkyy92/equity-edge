@@ -4,7 +4,7 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 export interface StockRecommendation {
   symbol: string;
-  name: string;  // Added company name field
+  name: string;  
   reason: string;
   confidence: number;
   potentialGrowth: number;
@@ -20,7 +20,7 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
   const timeout = setTimeout(() => controller.abort(), 25000);
 
   try {
-    console.log('Fetching AI recommendations');
+    console.log('[OpenAI] Fetching AI recommendations for timeframe:', timeframe);
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -40,7 +40,7 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
 
             For each recommendation, include:
             - The stock symbol
-            - The full legal company name
+            - The full legal company name (VERY IMPORTANT)
             - Current market position and growth trajectory
             - Competitive advantages
             - Industry trends and market opportunities
@@ -70,14 +70,15 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('OpenAI API error:', errorText);
+      console.error('[OpenAI] API error:', errorText);
       throw new Error(`OpenAI API error: ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('Received AI response');
+    console.log('[OpenAI] Received response:', JSON.stringify(aiData, null, 2));
 
     if (!aiData.choices?.[0]?.message?.content) {
+      console.error('[OpenAI] Invalid response format:', aiData);
       throw new Error('Invalid AI response format');
     }
 
@@ -86,18 +87,35 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
       .replace(/```\n?/g, '')
       .trim();
     
-    console.log('Cleaned content:', content);
+    console.log('[OpenAI] Cleaned content:', content);
     const recommendations = JSON.parse(content);
     
     if (!Array.isArray(recommendations)) {
+      console.error('[OpenAI] Response is not an array:', recommendations);
       throw new Error('Response is not an array');
     }
+
+    // Validate each recommendation has required fields
+    recommendations.forEach((rec, index) => {
+      console.log(`[OpenAI] Recommendation ${index + 1}:`, {
+        symbol: rec.symbol,
+        name: rec.name,
+        confidence: rec.confidence,
+        potentialGrowth: rec.potentialGrowth
+      });
+      
+      if (!rec.name || typeof rec.name !== 'string') {
+        console.error(`[OpenAI] Missing or invalid name for symbol ${rec.symbol}`);
+      }
+    });
 
     return recommendations;
   } catch (error) {
     if (error.name === 'AbortError') {
+      console.error('[OpenAI] Request timeout');
       throw new Error('Request timeout');
     }
+    console.error('[OpenAI] Error:', error);
     throw error;
   } finally {
     clearTimeout(timeout);
