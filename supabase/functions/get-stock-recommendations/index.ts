@@ -1,7 +1,12 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +25,30 @@ serve(async (req) => {
     if (!openAIApiKey) {
       console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
+    }
+
+    // Check for recent cached recommendations
+    const { data: cachedRecs, error: cacheError } = await supabase
+      .from('stock_recommendations')
+      .select('*')
+      .eq('strategy_type', timeframe)
+      .order('created_at', { ascending: false })
+      .limit(6);
+
+    if (cacheError) {
+      console.error('Error fetching cached recommendations:', cacheError);
+    }
+
+    // Use cached data if it's less than 30 minutes old
+    if (cachedRecs?.length > 0) {
+      const mostRecent = new Date(cachedRecs[0].created_at);
+      if (Date.now() - mostRecent.getTime() < 30 * 60 * 1000) {
+        console.log('Returning cached recommendations');
+        return new Response(
+          JSON.stringify({ recommendations: cachedRecs }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     console.log('Fetching AI recommendations for timeframe:', timeframe);
@@ -79,6 +108,29 @@ serve(async (req) => {
           throw new Error(`Invalid recommendation format at index ${index}`);
         }
       });
+
+      // Store recommendations in Supabase
+      await Promise.all(recommendations.map(async (rec: any) => {
+        const analysisField = `${timeframe.split('-')[0]}_term_analysis`;
+        
+        await supabase
+          .from('stock_recommendations')
+          .upsert({
+            symbol: rec.symbol,
+            strategy_type: timeframe,
+            [analysisField]: {
+              potentialGrowth: rec.potentialGrowth,
+              timeframe: timeframe
+            },
+            confidence_metrics: {
+              confidence: rec.confidence
+            },
+            explanation: rec.reason,
+            primary_drivers: rec.primaryDrivers
+          }, {
+            onConflict: 'symbol,strategy_type'
+          });
+      }));
 
     } catch (error) {
       console.error('Error processing AI recommendations:', error);
