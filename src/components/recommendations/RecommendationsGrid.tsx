@@ -1,97 +1,99 @@
 import React from "react";
-import { StockWithAnalysis, TimeframeKey } from "@/lib/types/recommendations";
+import { Card } from "@/components/ui/card";
+import { TrendingUpIcon } from "lucide-react";
 import StockCardSkeleton from "@/components/StockCardSkeleton";
 import RecommendationCard from "@/components/RecommendationCard";
-import { EmptyRecommendations } from "./EmptyRecommendations";
+import { StockTicker } from "@/lib/types/stock";
+
+interface TimeframeAnalysis {
+  potentialGrowth: number;
+  reason: string;
+  confidence: number;
+  primaryDrivers: string[];
+}
 
 interface RecommendationsGridProps {
-  recommendations: StockWithAnalysis[] | undefined;
+  recommendations: (StockTicker & { aiAnalysis?: TimeframeAnalysis })[] | undefined;
   isLoading: boolean;
   timeframe: string;
 }
 
-/**
- * RecommendationsGrid Component
- * 
- * Displays a grid of stock recommendations based on AI analysis for different timeframes.
- * 
- * Features:
- * - Shows loading skeletons while data is being fetched
- * - Displays empty state when no recommendations are available
- * - Renders recommendation cards with stock analysis data
- * - Handles different timeframes (short, medium, long term)
- * 
- * @param recommendations - Array of stock recommendations with AI analysis
- * @param isLoading - Loading state indicator
- * @param timeframe - Current selected timeframe
- */
 const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
   recommendations,
   isLoading,
   timeframe
 }) => {
-  // Show loading state
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <StockCardSkeleton key={i} />
         ))}
       </div>
     );
   }
 
-  // Show empty state
   if (!recommendations || recommendations.length === 0) {
-    return <EmptyRecommendations />;
+    return (
+      <Card className="p-8 text-center bg-background/95 backdrop-blur-lg border-border/50">
+        <TrendingUpIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-lg font-medium">No recommendations available</p>
+        <p className="text-muted-foreground">Check back later for updated analysis!</p>
+      </Card>
+    );
   }
 
-  /**
-   * Extracts timeframe-specific analysis data from a stock recommendation
-   */
-  const getTimeframeData = (stock: StockWithAnalysis, key: string) => {
-    const timeframeKey = `${key.split('-')[0]}_term_analysis` as keyof typeof stock;
-    return stock[timeframeKey] as Record<string, any> | undefined;
+  const getConfidence = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
+    const analysis = stock[timeframeKey] as any;
+    
+    if (analysis?.confidence_metrics?.confidence) {
+      return analysis.confidence_metrics.confidence;
+    }
+    
+    return stock.aiAnalysis?.confidence || 0;
   };
 
-  /**
-   * Gets the confidence value for a stock recommendation
-   */
-  const getConfidence = (stock: StockWithAnalysis): number => {
-    const analysis = getTimeframeData(stock, timeframe);
-    return analysis?.confidence_metrics?.confidence ?? 0;
+  const getGrowthPotential = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
+    const analysis = stock[timeframeKey] as any;
+    
+    if (analysis?.potentialGrowth) {
+      return analysis.potentialGrowth;
+    }
+    
+    return stock.aiAnalysis?.potentialGrowth || 0;
   };
 
-  /**
-   * Gets the growth potential for a stock recommendation
-   */
-  const getGrowthPotential = (stock: StockWithAnalysis): number => {
-    const analysis = getTimeframeData(stock, timeframe);
-    return analysis?.potentialGrowth ?? 0;
+  const getReason = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
+    const analysis = stock[timeframeKey] as any;
+    
+    if (analysis?.reason) {
+      return analysis.reason;
+    }
+
+    return stock.aiAnalysis?.reason || '';
   };
 
-  /**
-   * Gets the analysis reason for a stock recommendation
-   */
-  const getReason = (stock: StockWithAnalysis): string => {
-    const analysis = getTimeframeData(stock, timeframe);
-    return analysis?.reason ?? '';
-  };
-
-  /**
-   * Gets the primary drivers for a stock recommendation
-   */
-  const getPrimaryDrivers = (stock: StockWithAnalysis): string[] => {
-    const analysis = getTimeframeData(stock, timeframe);
-    return analysis?.primary_drivers ?? [];
+  const getPrimaryDrivers = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
+    const stockWithDrivers = stock as any;
+    if (Array.isArray(stockWithDrivers.primaryDrivers) && stockWithDrivers.primaryDrivers.length > 0) {
+      return stockWithDrivers.primaryDrivers;
+    }
+    
+    return stock.aiAnalysis?.primaryDrivers || [];
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {recommendations.map((stock) => {
         const confidence = getConfidence(stock);
-        
-        // Skip recommendations without confidence data
+        const growthPotential = getGrowthPotential(stock);
+        const reason = getReason(stock);
+        const primaryDrivers = getPrimaryDrivers(stock);
+
+        // Only show recommendations with valid confidence values
         if (confidence === null || confidence === undefined) {
           console.warn(`No confidence data available for ${stock.symbol}`);
           return null;
@@ -102,22 +104,22 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
             key={stock.symbol}
             symbol={stock.symbol}
             name={stock.name}
-            recommendation={getGrowthPotential(stock) >= 0 ? "Buy" : "Sell"}
+            recommendation={growthPotential >= 0 ? "Buy" : "Sell"}
             confidence={confidence}
-            reason={getReason(stock)}
+            reason={reason}
             price={stock.price ?? 0}
             change={stock.change ?? 0}
             changePercent={stock.changePercent ?? 0}
             volume={stock.volume ?? 0}
             vwap={stock.vwap ?? 0}
-            growthPotential={getGrowthPotential(stock)}
+            growthPotential={growthPotential}
             timeframe={timeframe.split('-')[0]}
             isin={stock.isin}
             valorNumber={stock.valor_number}
             fundamentalMetrics={stock.fundamentalMetrics}
             technicalSignals={stock.technicalSignals}
             marketContext={stock.marketContext}
-            primaryDrivers={getPrimaryDrivers(stock)}
+            primaryDrivers={primaryDrivers}
           />
         );
       })}
