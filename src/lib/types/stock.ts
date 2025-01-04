@@ -35,6 +35,12 @@ export interface TimeframeAnalysis {
   primaryDrivers: string[];
 }
 
+export interface ConfidenceMetrics {
+  confidence: number;
+  factors?: string[];
+  lastUpdated?: string;
+}
+
 export interface AIRecommendation {
   timeframe: 'short' | 'medium' | 'long';
   potentialGrowth: number;
@@ -71,6 +77,8 @@ export interface StockTicker {
   technicalSignals?: TechnicalSignals;
   marketContext?: MarketContext;
   primaryDrivers?: string[];
+  primary_drivers?: string[];  // Added to match database field
+  confidence_metrics?: ConfidenceMetrics;  // Added to match database field
   aiRecommendation?: AIRecommendation;
-  aiAnalysis?: TimeframeAnalysis;  // Added this line to fix the type error
+  aiAnalysis?: TimeframeAnalysis;
 }
