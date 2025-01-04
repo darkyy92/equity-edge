@@ -6,6 +6,7 @@ import { toast } from "@/components/ui/use-toast";
 import { StockTicker, FundamentalMetrics, TechnicalSignals, MarketContext } from "@/lib/types/stock";
 import { Json } from "@/integrations/supabase/types";
 import RecommendationTabs from "@/components/recommendations/RecommendationTabs";
+import Sidebar from "@/components/Sidebar";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
@@ -138,15 +139,19 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 space-y-6 animate-fade-in">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <SearchBar />
-        <RecommendationTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          recommendations={recommendations}
-          isLoading={isLoading}
-        />
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <div className="flex-1 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <h1 className="text-2xl font-semibold mb-6">Investment Dashboard</h1>
+          <SearchBar />
+          <RecommendationTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            recommendations={recommendations}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
     </div>
   );

@@ -26,11 +26,11 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative max-w-xl mx-auto">
       <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+        <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          className="pl-10"
+          className="pl-10 bg-background/50 border-border/50"
           placeholder="Search stocks by name or symbol..."
           value={query}
           onChange={(e) => {
@@ -42,17 +42,17 @@ const SearchBar = () => {
       </div>
 
       {isResultsVisible && query && (
-        <Card className="absolute z-50 w-full mt-2 p-2 max-h-[300px] overflow-y-auto">
+        <Card className="absolute z-50 w-full mt-2 p-2 max-h-[300px] overflow-y-auto bg-background/95 backdrop-blur-lg border-border/50">
           {isLoading ? (
             <div className="flex items-center justify-center p-4">
-              <Loader2Icon className="animate-spin" />
+              <Loader2Icon className="animate-spin h-4 w-4" />
             </div>
           ) : searchResults?.length ? (
             <div className="space-y-2">
               {searchResults.map((stock) => (
                 <div
                   key={stock.ticker}
-                  className="p-2 hover:bg-muted rounded-md cursor-pointer"
+                  className="p-2 hover:bg-accent rounded-md cursor-pointer"
                   onClick={() => handleStockClick(stock.ticker)}
                 >
                   <div className="font-medium">{stock.ticker}</div>

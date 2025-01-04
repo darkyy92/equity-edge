@@ -47,7 +47,6 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
         refetchType: 'active',
       });
       
-      // Wait for the refetch to complete
       await queryClient.refetchQueries({ 
         queryKey: ['recommendations'],
         type: 'active',
@@ -70,7 +69,6 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
   return (
     <Tabs defaultValue="short-term" className="w-full" onValueChange={(value) => setActiveTab(value as TimeFrame)}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold">Investment Recommendations</h2>
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
@@ -82,10 +80,25 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
             <RefreshCwIcon className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
-          <TabsList>
-            <TabsTrigger value="short-term">Short Term</TabsTrigger>
-            <TabsTrigger value="medium-term">Medium Term</TabsTrigger>
-            <TabsTrigger value="long-term">Long Term</TabsTrigger>
+          <TabsList className="bg-background/50 border border-border/50">
+            <TabsTrigger 
+              value="short-term"
+              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
+            >
+              Short Term
+            </TabsTrigger>
+            <TabsTrigger 
+              value="medium-term"
+              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
+            >
+              Medium Term
+            </TabsTrigger>
+            <TabsTrigger 
+              value="long-term"
+              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
+            >
+              Long Term
+            </TabsTrigger>
           </TabsList>
         </div>
       </div>

@@ -6,9 +6,11 @@ import {
   NewspaperIcon,
   BuildingIcon,
   AlertCircleIcon,
-  InfoIcon
+  InfoIcon,
+  StarIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface RecommendationCardProps {
@@ -81,38 +83,23 @@ const RecommendationCard = ({
     return num.toFixed(2);
   };
 
-  const getTimeframeText = (tf: string) => {
-    switch(tf) {
-      case 'short': return '3 months';
-      case 'medium': return '6-12 months';
-      case 'long': return '1+ years';
-      default: return tf;
-    }
-  };
-
   return (
     <Link to={`/stock/${symbol}`}>
-      <Card className="glass-card p-6 hover-scale hover:shadow-lg transition-all duration-200">
+      <Card className="bg-background/95 backdrop-blur-lg border-border/50 p-6 hover:shadow-lg transition-all duration-200">
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center space-x-2 mb-2">
               <Badge className={getBadgeColor(recommendation)}>{recommendation}</Badge>
-              <Badge variant="outline">{confidence}% Confidence</Badge>
+              <Badge variant="outline" className="bg-[#C6B67E]/10 text-[#C6B67E] border-[#C6B67E]/20">
+                {confidence}% Confidence
+              </Badge>
             </div>
             <h3 className="text-lg font-semibold">{name}</h3>
             <p className="text-sm text-muted-foreground">{symbol}</p>
-            {(isin || valorNumber) && (
-              <div className="flex items-center gap-2 mt-1">
-                <InfoIcon className="w-4 h-4 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">
-                  {isin && `ISIN: ${isin}`}
-                  {isin && valorNumber && " | "}
-                  {valorNumber && `Valor: ${valorNumber}`}
-                </p>
-              </div>
-            )}
           </div>
-          <TrendingUpIcon className="text-muted-foreground" />
+          <Button variant="ghost" size="icon" className="text-[#C6B67E]">
+            <StarIcon className="h-4 w-4" />
+          </Button>
         </div>
         
         <div className="grid grid-cols-2 gap-4 mb-4">
@@ -128,48 +115,22 @@ const RecommendationCard = ({
           </div>
         </div>
 
-        {/* Key Drivers Section */}
-        <div className="mb-4">
-          <h4 className="text-sm font-medium mb-2">Key Drivers</h4>
-          <div className="flex flex-wrap gap-2">
-            {primaryDrivers.map((driver, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {driver}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Analysis Summary */}
         <div className="space-y-2 mb-4">
-          {fundamentalMetrics && (
-            <div className="flex items-center gap-2">
-              <BuildingIcon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">
-                ROE: {fundamentalMetrics.roe}% | Margin: {fundamentalMetrics.profitMargin}%
-              </span>
-            </div>
-          )}
-          {technicalSignals && (
-            <div className="flex items-center gap-2">
-              <BarChart3Icon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">
-                RSI: {technicalSignals.rsi} | {technicalSignals.movingAverages}
-              </span>
-            </div>
-          )}
-          {marketContext && (
-            <div className="flex items-center gap-2">
-              <NewspaperIcon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">{marketContext.sectorTrend}</span>
-            </div>
-          )}
+          {primaryDrivers.map((driver, index) => (
+            <Badge 
+              key={index} 
+              variant="outline" 
+              className="mr-2 mb-2 bg-accent/50 text-foreground border-accent"
+            >
+              {driver}
+            </Badge>
+          ))}
         </div>
 
-        <div className="border-t pt-4">
+        <div className="border-t border-border/50 pt-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <AlertCircleIcon className="w-4 h-4 text-muted-foreground" />
+              <AlertCircleIcon className="w-4 h-4 text-[#C6B67E]" />
               <span className="text-sm font-medium">Growth Potential</span>
             </div>
             <TooltipProvider>
@@ -180,7 +141,7 @@ const RecommendationCard = ({
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Estimated growth potential for {getTimeframeText(timeframe)} term</p>
+                  <p>Estimated growth potential for {timeframe} term</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
