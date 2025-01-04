@@ -78,6 +78,7 @@ export type Database = {
           long_term_analysis: Json | null
           market_context: Json | null
           medium_term_analysis: Json | null
+          name: string | null
           news_sentiment: Json | null
           primary_drivers: string[] | null
           recommendation_strength: string | null
@@ -100,6 +101,7 @@ export type Database = {
           long_term_analysis?: Json | null
           market_context?: Json | null
           medium_term_analysis?: Json | null
+          name?: string | null
           news_sentiment?: Json | null
           primary_drivers?: string[] | null
           recommendation_strength?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           long_term_analysis?: Json | null
           market_context?: Json | null
           medium_term_analysis?: Json | null
+          name?: string | null
           news_sentiment?: Json | null
           primary_drivers?: string[] | null
           recommendation_strength?: string | null

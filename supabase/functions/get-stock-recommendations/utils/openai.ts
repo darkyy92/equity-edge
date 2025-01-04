@@ -106,6 +106,7 @@ export const getAIRecommendations = async (timeframe: string): Promise<StockReco
       
       if (!rec.name || typeof rec.name !== 'string') {
         console.error(`[OpenAI] Missing or invalid name for symbol ${rec.symbol}`);
+        rec.name = rec.symbol; // Fallback to symbol if name is missing
       }
     });
 
