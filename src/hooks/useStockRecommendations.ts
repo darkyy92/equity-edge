@@ -1,36 +1,15 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { StockTicker, FundamentalMetrics, TechnicalSignals, MarketContext } from "@/lib/types/stock";
-import { Json } from "@/integrations/supabase/types";
+import { StockTicker } from "@/lib/types/stock";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
-
-interface StockRecommendation {
-  symbol: string;
-  name?: string;
-  confidence_metrics: {
-    confidence: number;
-  } | null;
-  explanation: string | null;
-  fundamental_metrics: Json | null;
-  technical_signals: Json | null;
-  market_context: Json | null;
-  primary_drivers: string[] | null;
-  price?: number;
-  change?: number;
-  changePercent?: number;
-  volume?: number;
-  vwap?: number;
-  isin?: string;
-  valor_number?: string;
-}
 
 export const useStockRecommendations = (timeframe: TimeFrame) => {
   const queryClient = useQueryClient();
 
-  const transformToStockTicker = (recommendation: StockRecommendation): StockTicker => ({
+  const transformToStockTicker = (recommendation: any): StockTicker => ({
     ticker: recommendation.symbol,
     symbol: recommendation.symbol,
     name: recommendation.name || recommendation.symbol,
@@ -44,16 +23,9 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
     composite_figi: '',
     share_class_figi: '',
     last_updated_utc: new Date().toISOString(),
-    price: recommendation.price,
-    change: recommendation.change,
-    changePercent: recommendation.changePercent,
-    volume: recommendation.volume,
-    vwap: recommendation.vwap,
-    isin: recommendation.isin,
-    valor_number: recommendation.valor_number,
-    fundamentalMetrics: recommendation.fundamental_metrics as FundamentalMetrics | undefined,
-    technicalSignals: recommendation.technical_signals as TechnicalSignals | undefined,
-    marketContext: recommendation.market_context as MarketContext | undefined,
+    fundamentalMetrics: recommendation.fundamental_metrics,
+    technicalSignals: recommendation.technical_signals,
+    marketContext: recommendation.market_context,
     primaryDrivers: recommendation.primary_drivers || [],
     aiAnalysis: {
       potentialGrowth: recommendation[`${timeframe.split('-')[0]}_term_analysis`]?.potentialGrowth || 0,
@@ -68,20 +40,26 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
     queryFn: async () => {
       console.log('Fetching recommendations for timeframe:', timeframe);
       
-      const { data: cachedRecommendations, error: dbError } = await supabase
-        .from('stock_recommendations')
-        .select('*')
-        .eq('strategy_type', timeframe)  // Changed this line to use full timeframe
-        .order('updated_at', { ascending: false })
-        .limit(6);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-recommendations`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ timeframe }),
+        });
 
-      console.log('Query results:', { cachedRecommendations, dbError });
+        if (!response.ok) {
+          throw new Error('Failed to fetch recommendations');
+        }
 
-      if (dbError) throw dbError;
-
-      return cachedRecommendations?.map(rec => 
-        transformToStockTicker(rec as unknown as StockRecommendation)
-      ) || [];
+        const data = await response.json();
+        return data.recommendations?.map(rec => transformToStockTicker(rec)) || [];
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        throw error;
+      }
     },
     staleTime: 15 * 60 * 1000,
     gcTime: 60 * 60 * 1000,

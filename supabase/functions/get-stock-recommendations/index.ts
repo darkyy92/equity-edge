@@ -2,7 +2,6 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const MARKETSTACK_API_KEY = Deno.env.get('MARKETSTACK_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,14 +9,13 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     console.log('Starting get-stock-recommendations function');
-    const { timeframe = 'short' } = await req.json();
+    const { timeframe = 'short-term' } = await req.json();
 
     if (!openAIApiKey) {
       console.error('OpenAI API key not configured');
@@ -36,19 +34,19 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial analyst. Return ONLY a raw JSON array of 6 stock recommendations. Each object must have exactly these fields and types:
+            content: `You are a financial analyst. Return ONLY a raw JSON array of 6 stock recommendations for ${timeframe} investment opportunities. Each object must have exactly these fields and types:
             {
-              "symbol": string,
-              "reason": string,
+              "symbol": string (stock ticker),
+              "reason": string (2-3 sentences explaining why),
               "confidence": number (0-100),
-              "potentialGrowth": number,
-              "primaryDrivers": string[]
+              "potentialGrowth": number (expected percentage growth),
+              "primaryDrivers": string[] (3-4 key factors)
             }
-            Do not include any markdown, code blocks, or explanation text. Return only the raw JSON array.`
+            Focus on diverse sectors and both established and promising companies. Return only the raw JSON array.`
           },
           {
             role: 'user',
-            content: `Generate 6 diverse ${timeframe}-term stock recommendations, including both established and promising companies.`
+            content: `Generate 6 diverse ${timeframe} stock recommendations based on current market conditions and opportunities.`
           }
         ],
         temperature: 0.7,
@@ -64,7 +62,6 @@ serve(async (req) => {
     console.log('OpenAI API response:', aiData);
 
     if (!aiData.choices?.[0]?.message?.content) {
-      console.error('Invalid AI response format:', aiData);
       throw new Error('Invalid AI response format');
     }
 
@@ -72,7 +69,6 @@ serve(async (req) => {
     try {
       recommendations = JSON.parse(aiData.choices[0].message.content);
       
-      // Validate the response structure
       if (!Array.isArray(recommendations)) {
         throw new Error('Response is not an array');
       }
@@ -83,31 +79,50 @@ serve(async (req) => {
           throw new Error(`Invalid recommendation format at index ${index}`);
         }
       });
+
+      // Store recommendations in Supabase for caching
+      const { data: existingRecs, error: selectError } = await supabase
+        .from('stock_recommendations')
+        .select('*')
+        .eq('strategy_type', timeframe)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      // Only insert if we don't have recent recommendations (less than 30 minutes old)
+      const shouldInsert = !existingRecs?.length || 
+        (Date.now() - new Date(existingRecs[0].created_at).getTime() > 30 * 60 * 1000);
+
+      if (shouldInsert) {
+        await Promise.all(recommendations.map(async (rec: any) => {
+          const analysisField = `${timeframe.split('-')[0]}_term_analysis`;
+          
+          await supabase
+            .from('stock_recommendations')
+            .upsert({
+              symbol: rec.symbol,
+              strategy_type: timeframe,
+              [analysisField]: {
+                potentialGrowth: rec.potentialGrowth,
+                timeframe: timeframe
+              },
+              confidence_metrics: {
+                confidence: rec.confidence
+              },
+              explanation: rec.reason,
+              primary_drivers: rec.primaryDrivers
+            }, {
+              onConflict: 'symbol,strategy_type'
+            });
+        }));
+      }
+
     } catch (error) {
-      console.error('Error parsing AI recommendations:', error);
-      console.error('Raw content:', aiData.choices[0].message.content);
-      throw new Error('Failed to parse AI recommendations');
+      console.error('Error processing AI recommendations:', error);
+      throw new Error('Failed to process AI recommendations');
     }
 
-    console.log('Parsed recommendations:', recommendations);
-
-    // Return basic recommendations if MarketStack API is not available
     return new Response(
-      JSON.stringify({
-        recommendations: recommendations.map((rec: any) => ({
-          ...rec,
-          confidence_metrics: {
-            confidence: rec.confidence
-          },
-          [`${timeframe}_term_analysis`]: {
-            potentialGrowth: rec.potentialGrowth,
-            timeframe,
-            confidence: rec.confidence,
-            reason: rec.reason
-          },
-          primary_drivers: rec.primaryDrivers
-        }))
-      }),
+      JSON.stringify({ recommendations }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
