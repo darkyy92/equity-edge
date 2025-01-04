@@ -12,19 +12,6 @@ export const upsertRecommendations = async (recommendations: StockRecommendation
     count: recommendations.length, 
     timeframe: dbTimeframe 
   });
-
-  // First, delete existing recommendations for this timeframe
-  const { error: deleteError } = await supabase
-    .from('stock_recommendations')
-    .delete()
-    .eq('strategy_type', dbTimeframe);
-
-  if (deleteError) {
-    console.error('[Database] Error deleting old recommendations:', deleteError);
-    throw new Error(`Database error: ${deleteError.message}`);
-  }
-  
-  console.log(`[Database] Successfully deleted old recommendations for timeframe: ${dbTimeframe}`);
   
   for (const rec of recommendations) {
     console.log(`[Database] Processing recommendation for ${rec.symbol}:`, {
@@ -34,7 +21,7 @@ export const upsertRecommendations = async (recommendations: StockRecommendation
 
     const { data, error } = await supabase
       .from('stock_recommendations')
-      .insert({
+      .upsert({
         symbol: rec.symbol,
         name: rec.name,
         strategy_type: dbTimeframe,
@@ -47,15 +34,16 @@ export const upsertRecommendations = async (recommendations: StockRecommendation
         },
         primary_drivers: rec.primaryDrivers,
         updated_at: new Date().toISOString()
-      })
-      .select();
+      }, {
+        onConflict: 'symbol,strategy_type'
+      });
 
     if (error) {
-      console.error('[Database] Error during insert:', error);
+      console.error('[Database] Error during upsert:', error);
       throw new Error(`Database error: ${error.message}`);
     }
     
-    console.log(`[Database] Successfully inserted recommendation for: ${rec.symbol}`);
+    console.log(`[Database] Successfully upserted recommendation for: ${rec.symbol}`);
   }
 };
 
