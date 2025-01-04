@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import MarketOverview from "@/components/MarketOverview";
 import SearchBar from "@/components/SearchBar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,7 +141,6 @@ const Index = () => {
     <div className="min-h-screen bg-background p-6 space-y-6 animate-fade-in">
       <div className="max-w-7xl mx-auto space-y-6">
         <SearchBar />
-        <MarketOverview />
         <RecommendationTabs
           activeTab={activeTab}
           setActiveTab={setActiveTab}
