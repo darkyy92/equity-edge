@@ -1,74 +1,22 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Max-Age': '86400',
-};
-
-// Validate and transform timeframe to match database constraints
-const transformTimeframe = (timeframe: string): string => {
-  console.log('Input timeframe:', timeframe);
-  
-  // Map of valid transformations
-  const validTransforms = {
-    'short-term': 'short',
-    'medium-term': 'medium',
-    'long-term': 'long',
-    'short': 'short',
-    'medium': 'medium',
-    'long': 'long'
-  };
-
-  const transformed = validTransforms[timeframe];
-  if (!transformed) {
-    throw new Error(`Invalid timeframe: ${timeframe}. Must be one of: short-term, medium-term, long-term`);
-  }
-
-  console.log('Transformed timeframe:', transformed);
-  return transformed;
-};
+import { corsHeaders, handleCors } from "./utils/cors.ts";
+import { transformTimeframe } from "./utils/timeframe.ts";
+import { getAIRecommendations } from "./utils/openai.ts";
+import { getCachedRecommendations, upsertRecommendations } from "./utils/database.ts";
 
 serve(async (req) => {
   console.log('Request received:', req.method);
   
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      status: 204,
-      headers: corsHeaders 
-    });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { timeframe = 'short-term' } = await req.json();
     const dbTimeframe = transformTimeframe(timeframe);
     console.log('Processing request for timeframe:', timeframe, '→', dbTimeframe);
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
     // Check cache first
-    const { data: cachedRecs, error: cacheError } = await supabase
-      .from('stock_recommendations')
-      .select('*')
-      .eq('strategy_type', dbTimeframe)
-      .order('created_at', { ascending: false })
-      .limit(6);
-
-    if (cacheError) {
-      console.error('Database error:', cacheError);
-      throw new Error(`Database error: ${cacheError.message}`);
-    }
+    const cachedRecs = await getCachedRecommendations(dbTimeframe);
 
     // Return cached data if fresh enough
     if (cachedRecs?.length > 0) {
@@ -82,120 +30,16 @@ serve(async (req) => {
       }
     }
 
-    // Set up timeout for OpenAI request
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    // Get new recommendations from OpenAI
+    const recommendations = await getAIRecommendations(timeframe);
+    
+    // Store recommendations in database
+    await upsertRecommendations(recommendations, dbTimeframe);
 
-    try {
-      console.log('Fetching AI recommendations');
-      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a financial analyst. Return a raw JSON array of 6 stock recommendations for ${timeframe} investment opportunities. Each object must have exactly these fields and types:
-              {
-                "symbol": string (stock ticker),
-                "reason": string (2-3 sentences explaining why),
-                "confidence": number (0-100),
-                "potentialGrowth": number (expected percentage growth),
-                "primaryDrivers": string[] (3-4 key factors)
-              }
-              Return ONLY the raw JSON array with no markdown formatting or additional text.`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
-
-      if (!aiResponse.ok) {
-        const errorText = await aiResponse.text();
-        console.error('OpenAI API error:', errorText);
-        throw new Error(`OpenAI API error: ${errorText}`);
-      }
-
-      const aiData = await aiResponse.json();
-      console.log('Received AI response');
-
-      if (!aiData.choices?.[0]?.message?.content) {
-        throw new Error('Invalid AI response format');
-      }
-
-      let recommendations;
-      try {
-        const content = aiData.choices[0].message.content
-          .replace(/```json\n?/g, '')
-          .replace(/```\n?/g, '')
-          .trim();
-        
-        console.log('Cleaned content:', content);
-        recommendations = JSON.parse(content);
-        
-        if (!Array.isArray(recommendations)) {
-          throw new Error('Response is not an array');
-        }
-
-        // Validate recommendation format
-        recommendations.forEach((rec, index) => {
-          if (!rec.symbol || !rec.reason || 
-              typeof rec.confidence !== 'number' || 
-              typeof rec.potentialGrowth !== 'number' || 
-              !Array.isArray(rec.primaryDrivers)) {
-            throw new Error(`Invalid recommendation format at index ${index}`);
-          }
-        });
-
-        // Store recommendations in database
-        for (const rec of recommendations) {
-          const { error: upsertError } = await supabase
-            .from('stock_recommendations')
-            .upsert({
-              symbol: rec.symbol,
-              strategy_type: dbTimeframe,
-              explanation: rec.reason,
-              confidence_metrics: { confidence: rec.confidence },
-              [`${dbTimeframe}_term_analysis`]: {
-                potentialGrowth: rec.potentialGrowth,
-                timeframe: dbTimeframe
-              },
-              primary_drivers: rec.primaryDrivers,
-              updated_at: new Date().toISOString()
-            });
-
-          if (upsertError) {
-            console.error('Database error:', upsertError);
-            throw new Error(`Database error: ${upsertError.message}`);
-          }
-        }
-
-        return new Response(
-          JSON.stringify({ data: { recommendations } }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-
-      } catch (error) {
-        console.error('Error processing recommendations:', error);
-        throw new Error(`Failed to process recommendations: ${error.message}`);
-      }
-
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout');
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeout);
-    }
+    return new Response(
+      JSON.stringify({ data: { recommendations } }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Function error:', error);
