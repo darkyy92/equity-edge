@@ -1,133 +1,95 @@
-import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RecommendationsGrid from "./RecommendationsGrid";
-import { StockTicker } from "@/lib/types/stock";
 import { Button } from "@/components/ui/button";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import RecommendationsGrid from "./RecommendationsGrid";
+import { useStockRecommendations } from "@/hooks/useStockRecommendations";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-
-type TimeFrame = "short-term" | "medium-term" | "long-term";
 
 interface RecommendationTabsProps {
-  activeTab: TimeFrame;
-  setActiveTab: (value: TimeFrame) => void;
-  recommendations: StockTicker[] | undefined;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  recommendations: any[];
   isLoading: boolean;
 }
 
-const getTimeframeDescription = (timeframe: TimeFrame) => {
-  switch (timeframe) {
-    case 'short-term':
-      return 'Stocks predicted to rise sharply in the next 3 months based on technical signals and momentum';
-    case 'medium-term':
-      return 'Stable stocks with solid fundamentals and moderate growth potential over 6-12 months';
-    case 'long-term':
-      return 'Companies with robust fundamentals, competitive advantages, and sustainable growth strategies (1+ years)';
-  }
-};
-
-const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
+const RecommendationTabs = ({
   activeTab,
   setActiveTab,
   recommendations,
-  isLoading
-}) => {
+  isLoading,
+}: RecommendationTabsProps) => {
   const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
-    const toastId = toast({
-      title: "Refreshing data",
-      description: "Fetching fresh stock and AI recommendations...",
-    });
-
     try {
-      // First, invalidate the cache for the current timeframe
-      await queryClient.invalidateQueries({ 
+      toast({
+        title: "Refreshing recommendations",
+        description: "Getting fresh AI analysis for your stocks...",
+      });
+
+      // Invalidate the cache for the current timeframe
+      await queryClient.invalidateQueries({
         queryKey: ['recommendations', activeTab],
+        refetchType: 'active',
         exact: true
       });
 
-      // Force clear the cache in Supabase by calling the edge function with refresh flag
-      await supabase.functions.invoke('get-stock-recommendations', {
-        body: JSON.stringify({ 
-          timeframe: activeTab,
-          refresh: true 
-        }),
-      });
-
-      // Then refetch the data
-      await queryClient.refetchQueries({ 
-        queryKey: ['recommendations', activeTab],
-        exact: true,
-        type: 'active'
-      });
-
       toast({
-        title: "Data refreshed",
-        description: "Successfully updated stock recommendations with fresh data.",
-        variant: "default",
+        title: "Recommendations refreshed",
+        description: "Your stock recommendations have been updated.",
       });
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error('Error refreshing recommendations:', error);
       toast({
-        title: "Error refreshing data",
-        description: "Failed to refresh recommendations. Please try again.",
+        title: "Refresh failed",
+        description: "Unable to refresh recommendations. Please try again.",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <Tabs defaultValue="short-term" className="w-full" onValueChange={(value) => setActiveTab(value as TimeFrame)}>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="gap-2"
-            disabled={isLoading}
-          >
-            <RefreshCwIcon className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh Data
-          </Button>
-          <TabsList className="bg-background/50 border border-border/50">
-            <TabsTrigger 
-              value="short-term"
-              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
-            >
-              Short Term
-            </TabsTrigger>
-            <TabsTrigger 
-              value="medium-term"
-              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
-            >
-              Medium Term
-            </TabsTrigger>
-            <TabsTrigger 
-              value="long-term"
-              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
-            >
-              Long Term
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList>
+          <TabsTrigger value="short-term">Short Term</TabsTrigger>
+          <TabsTrigger value="medium-term">Medium Term</TabsTrigger>
+          <TabsTrigger value="long-term">Long Term</TabsTrigger>
+        </TabsList>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="ml-4"
+        >
+          <RefreshCcw className="h-4 w-4 mr-2" />
+          Refresh Data
+        </Button>
       </div>
 
-      {['short-term', 'medium-term', 'long-term'].map((term) => (
-        <TabsContent key={term} value={term} className="space-y-4">
-          <p className="text-muted-foreground">
-            {getTimeframeDescription(term as TimeFrame)}
-          </p>
-          <RecommendationsGrid
-            recommendations={recommendations}
-            isLoading={isLoading}
-            timeframe={term}
-          />
-        </TabsContent>
-      ))}
+      <TabsContent value="short-term" className="mt-0">
+        <RecommendationsGrid
+          recommendations={recommendations}
+          isLoading={isLoading}
+          timeframe="short-term"
+        />
+      </TabsContent>
+      <TabsContent value="medium-term" className="mt-0">
+        <RecommendationsGrid
+          recommendations={recommendations}
+          isLoading={isLoading}
+          timeframe="medium-term"
+        />
+      </TabsContent>
+      <TabsContent value="long-term" className="mt-0">
+        <RecommendationsGrid
+          recommendations={recommendations}
+          isLoading={isLoading}
+          timeframe="long-term"
+        />
+      </TabsContent>
     </Tabs>
   );
 };

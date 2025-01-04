@@ -65,7 +65,10 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
         const { data: { data: functionResponse }, error: functionError } = await supabase.functions.invoke(
           'get-stock-recommendations',
           {
-            body: JSON.stringify({ timeframe }),
+            body: JSON.stringify({ 
+              timeframe,
+              refresh: true // Always request fresh data
+            }),
           }
         );
 
@@ -96,8 +99,8 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
         throw error;
       }
     },
-    staleTime: 15 * 60 * 1000, // Cache for 15 minutes
-    gcTime: 60 * 60 * 1000,
+    staleTime: 0, // Consider data immediately stale
+    gcTime: 60 * 60 * 1000, // Keep unused data for 1 hour
     retry: 1,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

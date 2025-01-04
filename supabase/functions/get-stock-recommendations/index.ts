@@ -11,7 +11,7 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { timeframe = 'short-term', refresh = false } = await req.json();
+    const { timeframe = 'short-term', refresh = true } = await req.json();
     const dbTimeframe = transformTimeframe(timeframe);
     console.log('Processing request for timeframe:', timeframe, '→', dbTimeframe, 'refresh:', refresh);
 
