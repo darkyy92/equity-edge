@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export const HeroSection = () => {
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 pb-16 overflow-hidden">
       {/* Primary gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#1A1F2C] via-[#222222] to-[#1E1E3F]" />
       
@@ -27,18 +27,18 @@ export const HeroSection = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto text-center space-y-8 animate-fade-in relative z-10">
+      <div className="max-w-5xl mx-auto text-center space-y-8 animate-fade-in relative z-10 px-4">
         <div className="flex items-center justify-center gap-2 text-sm font-medium">
           <span className="px-3 py-1 rounded-full bg-black/20 text-white backdrop-blur-sm border border-white/10">
             Powered by AI
           </span>
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-2 mb-8">
           <h1 className="text-4xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-white to-blue-100">
             Trade Smarter with
           </h1>
-          <h1 className="text-4xl md:text-7xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
+          <h1 className="text-4xl md:text-7xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text leading-tight">
             AI-Powered Intelligence
           </h1>
         </div>
