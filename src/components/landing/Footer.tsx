@@ -6,7 +6,7 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
-            <img src="/lovable-uploads/7661dd9d-dc3b-4bb9-958a-cf142b8196e4.png" alt="Equity Edge Logo" className="h-12 w-auto" />
+            <img src="/lovable-uploads/7661dd9d-dc3b-4bb9-958a-cf142b8196e4.png" alt="Equity Edge Logo" className="h-16 w-auto" />
             <p className="text-muted-foreground">
               Advanced AI-powered stock analysis for smarter investment decisions.
             </p>
