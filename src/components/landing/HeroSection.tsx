@@ -6,17 +6,17 @@ export const HeroSection = () => {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
       {/* Primary gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#9b87f5] via-[#7E69AB] to-[#0EA5E9]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#2E1065] via-[#4C1D95] to-[#1E40AF]" />
       
       {/* Grid pattern overlay with enhanced opacity */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 grid-pattern opacity-20" />
+        <div className="absolute inset-0 grid-pattern opacity-30" />
       </div>
       
       {/* Accent gradients for depth */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#33C3F0]/20 rounded-full blur-[120px] -translate-y-1/4 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#6E59A5]/20 rounded-full blur-[120px] translate-y-1/4 -translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] -translate-y-1/4 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] translate-y-1/4 -translate-x-1/4" />
       </div>
 
       {/* Content */}
