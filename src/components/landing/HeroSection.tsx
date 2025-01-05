@@ -10,7 +10,7 @@ export const HeroSection = () => {
       
       {/* Grid pattern overlay with enhanced opacity */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 grid-pattern opacity-20" />
+        <div className="absolute inset-0 grid-pattern opacity-40" />
       </div>
       
       {/* Accent gradients for depth */}
