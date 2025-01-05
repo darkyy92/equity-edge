@@ -5,19 +5,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import Index from "./pages/Index";
+import Landing from "./pages/Landing";
+import Dashboard from "./pages/Dashboard";
 import StockAnalysis from "./pages/StockAnalysis";
 
-// Configure QueryClient with global defaults for caching
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 15 * 60 * 1000, // Data considered fresh for 15 minutes
-      gcTime: 30 * 60 * 1000,    // Keep unused data in cache for 30 minutes
-      refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
+      staleTime: 15 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchInterval: 15 * 60 * 1000,
       refetchIntervalInBackground: true,
-      refetchOnWindowFocus: false, // Don't refetch on window focus
-      refetchOnMount: false,       // Don't refetch on component mount if data is fresh
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
     },
   },
 });
@@ -34,7 +34,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/stock/:symbol" element={<StockAnalysis />} />
             </Routes>
           </BrowserRouter>
