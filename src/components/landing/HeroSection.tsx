@@ -38,7 +38,7 @@ export const HeroSection = () => {
           <h1 className="text-4xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-white to-blue-100">
             Trade Smarter with
           </h1>
-          <h1 className="text-4xl md:text-7xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text leading-tight">
+          <h1 className="text-4xl md:text-7xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text leading-normal">
             AI-Powered Intelligence
           </h1>
         </div>
