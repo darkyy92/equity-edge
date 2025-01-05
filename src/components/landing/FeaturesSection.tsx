@@ -45,14 +45,13 @@ const features = [
 
 export const FeaturesSection = () => {
   return (
-    <div className="relative py-32 bg-background overflow-hidden">
-      <div className="absolute inset-0 grid-pattern opacity-10" />
+    <div className="relative py-32 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-20">
-          <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+          <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-100 via-white to-blue-100">
             Powerful Features for Smart Investing
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-xl text-white/80">
             Our platform combines cutting-edge AI technology with comprehensive market data to help you make informed investment decisions.
           </p>
         </div>
@@ -61,11 +60,11 @@ export const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="p-6 rounded-lg glass-card hover-scale"
+              className="p-6 rounded-lg bg-white/5 backdrop-blur-lg border border-white/10 hover:bg-white/10 transition-colors"
             >
-              <feature.icon className="h-12 w-12 mb-4 text-primary" />
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
+              <feature.icon className="h-12 w-12 mb-4 text-blue-400" />
+              <h3 className="text-xl font-semibold mb-2 text-white">{feature.title}</h3>
+              <p className="text-white/70">{feature.description}</p>
             </div>
           ))}
         </div>
