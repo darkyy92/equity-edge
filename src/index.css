@@ -99,3 +99,7 @@
 .footer-gradient {
   background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.05) 50%);
 }
+
+.bg-gradient-radial {
+  background-image: radial-gradient(circle at center, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%);
+}
