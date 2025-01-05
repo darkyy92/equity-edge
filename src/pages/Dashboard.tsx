@@ -11,9 +11,11 @@ const Dashboard = () => {
   const { recommendations, isLoading } = useStockRecommendations(activeTab);
 
   return (
-    <div className="relative min-h-screen bg-[#1A1F2C]">
+    <div className="relative min-h-screen">
       {/* Main background gradients */}
-      <div className="fixed inset-0 bg-gradient-to-br from-[#1A1F2C] via-[#222222] to-[#1E1E3F] -z-20" />
+      <div className="fixed inset-0 bg-gradient-to-br from-[#2B1B4B] via-[#1F1B4B] to-[#1B1B4B] -z-20" />
+      
+      {/* Accent gradients */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 opacity-30 bg-gradient-to-r from-purple-900 via-blue-900 to-purple-900" />
         <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-b from-transparent via-indigo-500/20 to-transparent" />
@@ -35,15 +37,20 @@ const Dashboard = () => {
         <div className="flex-1 p-6 overflow-hidden">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="animate-fade-in">
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-100 via-white to-blue-100 bg-clip-text text-transparent mb-2">
+              <div className="flex items-center gap-2 text-sm font-medium mb-4">
+                <span className="px-3 py-1 rounded-full bg-black/20 text-white backdrop-blur-sm border border-white/10">
+                  Powered by AI
+                </span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent mb-2">
                 Investment Dashboard
               </h1>
-              <p className="text-white/60 mb-8">
+              <p className="text-lg text-white/60 mb-8">
                 Make data-driven decisions with AI-powered insights
               </p>
             </div>
             
-            <div className="backdrop-blur-sm bg-white/5 rounded-lg border border-white/10 p-6 animate-fade-in">
+            <div className="backdrop-blur-sm bg-white/5 rounded-lg border border-white/10 p-6 animate-fade-in shadow-xl">
               <RecommendationTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
