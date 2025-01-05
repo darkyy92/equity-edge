@@ -12,23 +12,23 @@ const Dashboard = () => {
 
   return (
     <div className="relative min-h-screen">
-      {/* Main background gradients */}
-      <div className="fixed inset-0 bg-gradient-to-br from-[#2B1B4B] via-[#1F1B4B] to-[#1B1B4B] -z-20" />
+      {/* Main background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-purple-50 via-white to-purple-50 -z-20" />
       
       {/* Accent gradients */}
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 opacity-30 bg-gradient-to-r from-purple-900 via-blue-900 to-purple-900" />
-        <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-b from-transparent via-indigo-500/20 to-transparent" />
+        <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-purple-400 via-violet-400 to-purple-400" />
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-gradient-to-b from-transparent via-violet-400/20 to-transparent" />
       </div>
       
       {/* Grid pattern overlay */}
-      <div className="fixed inset-0 grid-pattern opacity-10 -z-10" />
+      <div className="fixed inset-0 grid-pattern opacity-5 -z-10" />
       
       {/* Enhanced accent gradients */}
       <div className="fixed inset-0 -z-10">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] -translate-y-1/4 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] translate-y-1/4 -translate-x-1/4" />
-        <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[90px] -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-400/10 rounded-full blur-[120px] -translate-y-1/4 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-400/10 rounded-full blur-[120px] translate-y-1/4 -translate-x-1/4" />
+        <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-violet-400/5 rounded-full blur-[90px] -translate-x-1/2 -translate-y-1/2" />
       </div>
 
       {/* Content */}
@@ -38,19 +38,19 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="animate-fade-in">
               <div className="flex items-center gap-2 text-sm font-medium mb-4">
-                <span className="px-3 py-1 rounded-full bg-black/20 text-white backdrop-blur-sm border border-white/10">
+                <span className="px-3 py-1 rounded-full bg-violet-100 text-violet-800 border border-violet-200">
                   Powered by AI
                 </span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600 bg-clip-text text-transparent mb-2">
                 Investment Dashboard
               </h1>
-              <p className="text-lg text-white/60 mb-8">
+              <p className="text-lg text-gray-600 mb-8">
                 Make data-driven decisions with AI-powered insights
               </p>
             </div>
             
-            <div className="backdrop-blur-sm bg-white/5 rounded-lg border border-white/10 p-6 animate-fade-in shadow-xl">
+            <div className="backdrop-blur-sm bg-white/40 rounded-lg border border-violet-100 p-6 animate-fade-in shadow-xl">
               <RecommendationTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
