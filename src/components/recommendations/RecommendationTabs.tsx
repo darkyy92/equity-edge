@@ -74,13 +74,13 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            className="gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 transition-colors"
+            className="gap-2 bg-black/20 border-white/10 text-white hover:bg-white/10 transition-colors"
             disabled={isLoading}
           >
             <RefreshCwIcon className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
-          <TabsList className="bg-white/5 border border-white/10">
+          <TabsList className="bg-black/20 border border-white/10">
             <TabsTrigger 
               value="short-term"
               className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/70"

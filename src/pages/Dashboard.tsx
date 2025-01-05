@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { StockTicker } from "@/lib/types/stock";
 import RecommendationTabs from "@/components/recommendations/RecommendationTabs";
 import Sidebar from "@/components/Sidebar";
 import { useStockRecommendations } from "@/hooks/useStockRecommendations";
@@ -13,7 +12,7 @@ const Dashboard = () => {
   return (
     <div className="relative min-h-screen">
       {/* Main background gradients */}
-      <div className="fixed inset-0 bg-gradient-to-br from-[#2B1B4B] via-[#1F1B4B] to-[#1B1B4B] -z-20" />
+      <div className="fixed inset-0 bg-gradient-to-br from-[#1A1F2C] via-[#1E1E3F] to-[#1B1B4B] -z-20" />
       
       {/* Accent gradients */}
       <div className="fixed inset-0 -z-10">
@@ -50,7 +49,7 @@ const Dashboard = () => {
               </p>
             </div>
             
-            <div className="backdrop-blur-sm bg-white/5 rounded-lg border border-white/10 p-6 animate-fade-in shadow-xl">
+            <div className="backdrop-blur-sm bg-black/20 rounded-lg border border-white/10 p-6 animate-fade-in shadow-xl">
               <RecommendationTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
