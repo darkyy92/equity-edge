@@ -35,10 +35,10 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
 
   if (!recommendations || recommendations.length === 0) {
     return (
-      <Card className="p-8 text-center bg-background/95 backdrop-blur-lg border-border/50">
-        <TrendingUpIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-lg font-medium">No recommendations available</p>
-        <p className="text-muted-foreground">Check back later for updated analysis!</p>
+      <Card className="p-8 text-center bg-white/5 backdrop-blur-sm border-white/10">
+        <TrendingUpIcon className="mx-auto h-12 w-12 text-white/40 mb-4" />
+        <p className="text-lg font-medium text-white">No recommendations available</p>
+        <p className="text-white/60">Check back later for updated analysis!</p>
       </Card>
     );
   }
@@ -111,7 +111,6 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
         const reason = getReason(stock);
         const primaryDrivers = getPrimaryDrivers(stock);
 
-        // Only show recommendations with valid confidence values
         if (!confidence) {
           console.warn(`No confidence data available for ${stock.symbol}`);
           return null;

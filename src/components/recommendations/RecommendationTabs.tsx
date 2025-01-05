@@ -68,34 +68,34 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
 
   return (
     <Tabs defaultValue="short-term" className="w-full" onValueChange={(value) => setActiveTab(value as TimeFrame)}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            className="gap-2"
+            className="gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 transition-colors"
             disabled={isLoading}
           >
             <RefreshCwIcon className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
-          <TabsList className="bg-background/50 border border-border/50">
+          <TabsList className="bg-white/5 border border-white/10">
             <TabsTrigger 
               value="short-term"
-              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/70"
             >
               Short Term
             </TabsTrigger>
             <TabsTrigger 
               value="medium-term"
-              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/70"
             >
               Medium Term
             </TabsTrigger>
             <TabsTrigger 
               value="long-term"
-              className="data-[state=active]:bg-[#C6B67E] data-[state=active]:text-background"
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/70"
             >
               Long Term
             </TabsTrigger>
@@ -105,7 +105,7 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
 
       {['short-term', 'medium-term', 'long-term'].map((term) => (
         <TabsContent key={term} value={term} className="space-y-4">
-          <p className="text-muted-foreground">
+          <p className="text-white/60">
             {getTimeframeDescription(term as TimeFrame)}
           </p>
           <RecommendationsGrid
