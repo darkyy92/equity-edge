@@ -34,11 +34,11 @@ export const HeroSection = () => {
           </span>
         </div>
         
-        <div className="space-y-4">
-          <h1 className="text-4xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-white to-blue-100">
+        <div className="space-y-8">
+          <h1 className="text-4xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-white to-blue-100 pb-2">
             Trade Smarter with
           </h1>
-          <h1 className="text-4xl md:text-7xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
+          <h1 className="text-4xl md:text-7xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text pb-4">
             AI-Powered Intelligence
           </h1>
         </div>
