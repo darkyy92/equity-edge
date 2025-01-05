@@ -26,7 +26,7 @@ export const Navigation = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <img src="/lovable-uploads/7661dd9d-dc3b-4bb9-958a-cf142b8196e4.png" alt="Equity Edge Logo" className="h-12 w-auto" />
+          <img src="/lovable-uploads/7661dd9d-dc3b-4bb9-958a-cf142b8196e4.png" alt="Equity Edge Logo" className="h-16 w-auto" />
         </div>
         
         <div className="hidden md:flex items-center space-x-8">
