@@ -1,4 +1,4 @@
-import { getAIAnalysis } from '@/lib/openai';
+import { getAIAnalysis } from '@/lib/ai/perplexity';
 
 export class StockAnalysisService {
   static async analyzeStocks(stocksData: any[]) {
@@ -17,7 +17,7 @@ export class StockAnalysisService {
         })
       );
 
-      console.log('AI Analysis Results:', recommendations);
+      console.log('Perplexity Analysis Results:', recommendations);
       return recommendations;
     } catch (error) {
       console.error('Error analyzing stocks:', error);

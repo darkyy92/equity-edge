@@ -1,1 +1,7 @@
 project_id = "vvfixcjsxkshtgmmygsi"
+
+[analyze-with-perplexity]
+verify_jwt = false
+
+[get-stock-recommendations-perplexity]
+verify_jwt = false
