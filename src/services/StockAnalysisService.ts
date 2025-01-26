@@ -1,11 +1,13 @@
-import { getAIAnalysis } from '@/lib/ai/perplexity';
+import { createAIProvider } from '@/lib/ai/factory';
 
 export class StockAnalysisService {
   static async analyzeStocks(stocksData: any[]) {
     try {
+      const aiProvider = createAIProvider();
+      
       const recommendations = await Promise.all(
         stocksData.map(async (stock) => {
-          const analysis = await getAIAnalysis(stock.symbol, stock);
+          const analysis = await aiProvider.analyzeStock(stock.symbol, stock);
           
           return {
             ticker: stock.symbol,
