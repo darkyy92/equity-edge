@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import LastUpdated from "@/components/LastUpdated";
-import { getAIAnalysis, type AIAnalysisResponse } from "@/lib/openai";
+import { type AIAnalysisResponse } from "@/lib/ai/providers/types";
 import { cn } from "@/lib/utils";
 import AdvancedAnalysis from "@/components/AdvancedAnalysis";
 import ComprehensiveAnalysis from "@/components/ComprehensiveAnalysis";
 import EntryRangeChart from "@/components/EntryRangeChart";
 import HoldSellIndicator from "@/components/HoldSellIndicator";
 import { supabase } from "@/integrations/supabase/client";
+import { createAIProvider } from "@/lib/ai/factory";
 
 type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
 
@@ -31,7 +32,10 @@ const StockAnalysis = () => {
 
   const { data: aiAnalysis, isLoading: isAILoading } = useQuery<AIAnalysisResponse | null>({
     queryKey: ['aiAnalysis', symbol],
-    queryFn: () => getAIAnalysis(symbol || '', priceData),
+    queryFn: async () => {
+      const aiProvider = createAIProvider();
+      return aiProvider.analyzeStock(symbol || '', priceData);
+    },
     enabled: !!symbol && !!priceData,
     refetchInterval: 1800000,
     staleTime: 1800000,
