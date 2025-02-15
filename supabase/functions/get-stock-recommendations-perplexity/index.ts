@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -17,6 +18,7 @@ serve(async (req) => {
     const { timeframe } = await req.json();
     
     console.log('Getting recommendations with Perplexity for timeframe:', timeframe);
+    const startTime = performance.now();
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -46,17 +48,46 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Perplexity API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        timeframe
+      });
       throw new Error(`Perplexity API error: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log('Raw Perplexity response:', JSON.stringify(data, null, 2));
+
     const recommendations = JSON.parse(data.choices[0].message.content);
+    console.log('Parsed recommendations:', recommendations);
+
+    const endTime = performance.now();
+    console.log(`Recommendations generated in ${(endTime - startTime).toFixed(2)}ms`);
+
+    // Validate recommendations format
+    recommendations.forEach((rec: any, index: number) => {
+      console.log(`Validating recommendation ${index + 1}:`, {
+        symbol: rec.symbol,
+        name: rec.name,
+        confidence: rec.confidence,
+        potentialGrowth: rec.potentialGrowth
+      });
+      
+      if (!rec.symbol || !rec.name || !rec.reason || !rec.confidence || !rec.potentialGrowth || !Array.isArray(rec.primaryDrivers)) {
+        console.error(`Invalid recommendation format for index ${index}:`, rec);
+        throw new Error(`Invalid recommendation format for ${rec.symbol || 'unknown'}`);
+      }
+    });
 
     return new Response(JSON.stringify({ recommendations }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in get-stock-recommendations-perplexity function:', error);
+    console.error('Stack trace:', error.stack);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -17,6 +18,9 @@ serve(async (req) => {
     const { symbol, stockData } = await req.json();
     
     console.log('Analyzing stock with Perplexity:', { symbol, stockData });
+
+    const startTime = performance.now();
+    console.log(`[${symbol}] Starting Perplexity analysis at ${new Date().toISOString()}`);
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -42,10 +46,18 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[${symbol}] Perplexity API error:`, {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
       throw new Error(`Perplexity API error: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log(`[${symbol}] Raw Perplexity response:`, JSON.stringify(data, null, 2));
+
     const analysis = data.choices[0].message.content;
 
     // Parse the analysis into sections
@@ -56,11 +68,16 @@ serve(async (req) => {
       risks: analysis.split('Risks:')[1].trim()
     };
 
+    const endTime = performance.now();
+    console.log(`[${symbol}] Analysis completed in ${(endTime - startTime).toFixed(2)}ms`);
+    console.log(`[${symbol}] Parsed sections:`, sections);
+
     return new Response(JSON.stringify({ generatedAnalysis: sections }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in analyze-with-perplexity function:', error);
+    console.error('Stack trace:', error.stack);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
