@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { TrendingUpIcon } from "lucide-react";
@@ -43,78 +44,13 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
     );
   }
 
-  const getConfidence = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
-    const analysis = stock[timeframeKey] as any;
-    
-    if (analysis?.confidence) {
-      return analysis.confidence;
-    }
-    
-    if (stock.confidence_metrics?.confidence) {
-      return stock.confidence_metrics.confidence;
-    }
-    
-    return stock.aiAnalysis?.confidence || 75;
-  };
-
-  const getGrowthPotential = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
-    const analysis = stock[timeframeKey] as any;
-    
-    if (analysis?.potentialGrowth) {
-      return analysis.potentialGrowth;
-    }
-    
-    return stock.aiAnalysis?.potentialGrowth || 0;
-  };
-
-  const getReason = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
-    const analysis = stock[timeframeKey] as any;
-    
-    if (analysis?.reason) {
-      return analysis.reason;
-    }
-
-    return stock.aiAnalysis?.reason || 'Analysis in progress...';
-  };
-
-  const getPrimaryDrivers = (stock: StockTicker & { aiAnalysis?: TimeframeAnalysis }) => {
-    const timeframeKey = `${timeframe.split('-')[0]}_term_analysis` as keyof typeof stock;
-    const analysis = stock[timeframeKey] as any;
-    
-    // First try to get from timeframe-specific analysis
-    if (analysis?.primaryDrivers && analysis.primaryDrivers.length > 0) {
-      return analysis.primaryDrivers;
-    }
-    
-    // Then try to get from primary_drivers array
-    if (Array.isArray(stock.primary_drivers) && stock.primary_drivers.length > 0) {
-      return stock.primary_drivers;
-    }
-    
-    // Finally try to get from aiAnalysis
-    if (stock.aiAnalysis?.primaryDrivers && stock.aiAnalysis.primaryDrivers.length > 0) {
-      return stock.aiAnalysis.primaryDrivers;
-    }
-    
-    // Return empty array if no drivers found
-    return [];
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {recommendations.map((stock) => {
-        const confidence = getConfidence(stock);
-        const growthPotential = getGrowthPotential(stock);
-        const reason = getReason(stock);
-        const primaryDrivers = getPrimaryDrivers(stock);
-
-        if (!confidence) {
-          console.warn(`No confidence data available for ${stock.symbol}`);
-          return null;
-        }
+        const confidence = stock.aiAnalysis?.confidence ?? 0;
+        const growthPotential = stock.aiAnalysis?.potentialGrowth ?? 0;
+        const reason = stock.aiAnalysis?.reason ?? '';
+        const primaryDrivers = stock.primaryDrivers || [];
 
         return (
           <RecommendationCard

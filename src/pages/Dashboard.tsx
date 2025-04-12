@@ -1,7 +1,10 @@
+
 import React, { useState } from "react";
 import RecommendationTabs from "@/components/recommendations/RecommendationTabs";
 import Sidebar from "@/components/Sidebar";
 import { useStockRecommendations } from "@/hooks/useStockRecommendations";
+import { Card } from "@/components/ui/card";
+import { TrendingUpIcon } from "lucide-react";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 

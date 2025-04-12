@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecommendationsGrid from "./RecommendationsGrid";
@@ -38,7 +39,7 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
   const handleRefresh = async () => {
     const toastId = toast({
       title: "Refreshing data",
-      description: "Fetching fresh stock and AI recommendations...",
+      description: "Fetching fresh stock recommendations...",
     });
 
     try {
@@ -90,12 +91,14 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
             <TabsTrigger 
               value="medium-term"
               className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/70"
+              disabled={true}
             >
               Medium Term
             </TabsTrigger>
             <TabsTrigger 
               value="long-term"
               className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/70"
+              disabled={true}
             >
               Long Term
             </TabsTrigger>
@@ -103,18 +106,38 @@ const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
         </div>
       </div>
 
-      {['short-term', 'medium-term', 'long-term'].map((term) => (
-        <TabsContent key={term} value={term} className="space-y-4">
-          <p className="text-white/60">
-            {getTimeframeDescription(term as TimeFrame)}
-          </p>
-          <RecommendationsGrid
-            recommendations={recommendations}
-            isLoading={isLoading}
-            timeframe={term}
-          />
-        </TabsContent>
-      ))}
+      <TabsContent value="short-term" className="space-y-4">
+        <p className="text-white/60">
+          {getTimeframeDescription('short-term')}
+        </p>
+        <RecommendationsGrid
+          recommendations={recommendations}
+          isLoading={isLoading}
+          timeframe="short-term"
+        />
+      </TabsContent>
+
+      <TabsContent value="medium-term" className="space-y-4">
+        <p className="text-white/60">
+          {getTimeframeDescription('medium-term')}
+        </p>
+        <Card className="p-8 text-center bg-white/5 backdrop-blur-sm border-white/10">
+          <TrendingUpIcon className="mx-auto h-12 w-12 text-white/40 mb-4" />
+          <p className="text-lg font-medium text-white">Medium-term recommendations coming soon</p>
+          <p className="text-white/60">This feature is currently in development.</p>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="long-term" className="space-y-4">
+        <p className="text-white/60">
+          {getTimeframeDescription('long-term')}
+        </p>
+        <Card className="p-8 text-center bg-white/5 backdrop-blur-sm border-white/10">
+          <TrendingUpIcon className="mx-auto h-12 w-12 text-white/40 mb-4" />
+          <p className="text-lg font-medium text-white">Long-term recommendations coming soon</p>
+          <p className="text-white/60">This feature is currently in development.</p>
+        </Card>
+      </TabsContent>
     </Tabs>
   );
 };
