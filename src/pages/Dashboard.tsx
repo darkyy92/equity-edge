@@ -1,104 +1,14 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import RecommendationTabs from "@/components/recommendations/RecommendationTabs";
 import Sidebar from "@/components/Sidebar";
 import { useStockRecommendations } from "@/hooks/useStockRecommendations";
-import { Card } from "@/components/ui/card";
-import { TrendingUpIcon } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { StockTicker } from "@/lib/types/stock";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
-
-const FALLBACK_DATA: StockTicker[] = [
-  {
-    ticker: "AAPL",
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    market: "US",
-    locale: "us",
-    primary_exchange: "NASDAQ",
-    type: "CS",
-    active: true,
-    currency_name: "USD",
-    cik: "",
-    composite_figi: "",
-    share_class_figi: "",
-    last_updated_utc: new Date().toISOString(),
-    price: 173.31,
-    change: 0.94,
-    changePercent: 0.55,
-    primaryDrivers: ["AI Integration", "Services Growth", "New Product Cycle"],
-    aiAnalysis: {
-      potentialGrowth: 12.5,
-      confidence: 8,
-      reason: "Strong ecosystem and services growth momentum",
-      primaryDrivers: ["AI Integration", "Services Growth", "New Product Cycle"]
-    }
-  },
-  {
-    ticker: "MSFT",
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    market: "US",
-    locale: "us",
-    primary_exchange: "NASDAQ",
-    type: "CS",
-    active: true,
-    currency_name: "USD",
-    cik: "",
-    composite_figi: "",
-    share_class_figi: "",
-    last_updated_utc: new Date().toISOString(),
-    price: 412.78,
-    change: 2.14,
-    changePercent: 0.52,
-    primaryDrivers: ["Azure Cloud Growth", "AI Leadership", "Enterprise Adoption"],
-    aiAnalysis: {
-      potentialGrowth: 15.2,
-      confidence: 9,
-      reason: "Leading position in cloud services and enterprise AI",
-      primaryDrivers: ["Azure Cloud Growth", "AI Leadership", "Enterprise Adoption"]
-    }
-  }
-];
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
   const { recommendations, isLoading } = useStockRecommendations(activeTab);
-  const [useFallback, setUseFallback] = useState(false);
-
-  useEffect(() => {
-    if (!isLoading && (!recommendations || recommendations.length === 0)) {
-      console.log("No recommendations found, enabling fallback data");
-      setUseFallback(true);
-      
-      toast({
-        title: "Using demo data",
-        description: "No recommendations found in the database, showing sample data instead.",
-      });
-    }
-  }, [isLoading, recommendations]);
-
-  useEffect(() => {
-    async function seedDatabaseIfEmpty() {
-      try {
-        const { count, error } = await supabase
-          .from('stock_recommendations')
-          .select('*', { count: 'exact', head: true });
-        
-        if (!error && count === 0) {
-          console.log("Database is empty, seeding with sample data");
-        }
-      } catch (e) {
-        console.error("Error checking database:", e);
-      }
-    }
-    
-    seedDatabaseIfEmpty();
-  }, []);
-
-  const displayRecommendations = useFallback ? FALLBACK_DATA : recommendations;
 
   return (
     <div className="relative min-h-screen">
@@ -139,7 +49,7 @@ const Dashboard = () => {
               <RecommendationTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                recommendations={displayRecommendations}
+                recommendations={recommendations}
                 isLoading={isLoading}
               />
             </div>

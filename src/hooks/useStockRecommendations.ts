@@ -22,6 +22,8 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
         if (supabaseRecommendations.length > 0) {
           console.log('Sample database record structure:', 
             Object.keys(supabaseRecommendations[0]).map(key => `${key}: ${typeof supabaseRecommendations[0][key as keyof typeof supabaseRecommendations[0]]}`));
+        } else {
+          console.log('No recommendations found in the database');
         }
         
         // Convert to StockTicker format

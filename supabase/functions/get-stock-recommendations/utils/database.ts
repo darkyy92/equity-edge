@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { StockRecommendation } from './openai.ts';
 import { Timeframe } from './timeframe.ts';
@@ -28,18 +29,16 @@ export const upsertRecommendations = async (recommendations: StockRecommendation
       .upsert({
         symbol: rec.symbol,
         name: rec.name,
-        strategy_type: dbTimeframe,
-        explanation: rec.reason,
-        confidence_metrics: { confidence: rec.confidence },
-        [`${dbTimeframe}_term_analysis`]: {
-          potentialGrowth: rec.potentialGrowth,
-          timeframe: dbTimeframe,
-          company_name: rec.name
-        },
-        primary_drivers: rec.primaryDrivers,
+        timeframe: dbTimeframe,
+        reason: rec.reason,
+        confidence: rec.confidence,
+        potentialGrowth: rec.potentialGrowth,
+        primaryDrivers: rec.primaryDrivers,
+        entryZone: rec.entryZone,
+        entryZoneExplanation: rec.entryZoneExplanation,
         updated_at: new Date().toISOString()
       }, {
-        onConflict: 'symbol,strategy_type'
+        onConflict: 'symbol,timeframe'
       });
 
     if (error) {
@@ -57,7 +56,7 @@ export const getCachedRecommendations = async (dbTimeframe: Timeframe) => {
   const { data: cachedRecs, error: cacheError } = await supabase
     .from('stock_recommendations')
     .select('*')
-    .eq('strategy_type', dbTimeframe)
+    .eq('timeframe', dbTimeframe)
     .order('created_at', { ascending: false })
     .limit(6);
 

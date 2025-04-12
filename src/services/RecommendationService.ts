@@ -23,12 +23,13 @@ export const RecommendationService = {
     try {
       console.log(`Fetching ${timeframe} recommendations from Supabase`);
       
-      // The key change: We need to query the database correctly based on its schema
-      // First attempt with exact match on timeframe column
+      // Query to get the latest 6 stocks, ordered by creation date descending
       const { data, error } = await supabase
         .from('stock_recommendations')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('timeframe', timeframe)
+        .order('created_at', { ascending: false })
+        .limit(6);
 
       if (error) {
         console.error('Error fetching recommendations:', error);
@@ -38,32 +39,25 @@ export const RecommendationService = {
       console.log(`Received ${data?.length || 0} recommendations from Supabase`);
       console.log('Raw Supabase data:', data);
       
-      // Filter data client-side if necessary, since the database schema might not have a direct timeframe column
-      const filteredData = data?.filter(rec => {
-        // Check various possible column names that might store timeframe info
-        if (rec.timeframe && rec.timeframe.includes(timeframe)) return true;
-        if (rec.strategy_type && rec.strategy_type.includes(timeframe)) return true;
-        // If we can't find a direct match, include all recommendations for now
-        return true;
-      });
+      if (!data || data.length === 0) {
+        return [];
+      }
       
-      console.log(`Filtered to ${filteredData?.length || 0} ${timeframe} recommendations`);
-      
-      // Process and transform data to match StockRecommendation interface
-      return filteredData?.map(rec => ({
+      // Transform the data to match StockRecommendation interface
+      return data.map(rec => ({
         id: rec.id,
         symbol: rec.symbol,
         name: rec.name,
-        timeframe: rec.timeframe || rec.strategy_type || timeframe,
-        reason: rec.reason || rec.explanation || '',
-        confidence: rec.confidence || (rec.confidence_metrics?.confidence) || 5,
+        timeframe: rec.timeframe,
+        reason: rec.reason || '',
+        confidence: rec.confidence || 5,
         potentialGrowth: rec.potentialGrowth || '0',
         primaryDrivers: this.extractPrimaryDrivers(rec),
         entryZone: rec.entryZone,
         entryZoneExplanation: rec.entryZoneExplanation,
         current_price: rec.current_price,
         created_at: rec.created_at
-      })) || [];
+      }));
     } catch (error) {
       console.error('Error in getStockRecommendations:', error);
       throw error;
