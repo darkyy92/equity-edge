@@ -18,11 +18,20 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
         
         console.log('Supabase recommendations:', supabaseRecommendations);
         
+        // Log database structure to help with debugging
+        if (supabaseRecommendations.length > 0) {
+          console.log('Sample database record structure:', 
+            Object.keys(supabaseRecommendations[0]).map(key => `${key}: ${typeof supabaseRecommendations[0][key as keyof typeof supabaseRecommendations[0]]}`));
+        }
+        
         // Convert to StockTicker format
-        return supabaseRecommendations.map(rec => 
+        const stockTickers = supabaseRecommendations.map(rec => 
           RecommendationService.convertToStockTicker(rec)
         );
-
+        
+        console.log('Converted to StockTicker format:', stockTickers);
+        
+        return stockTickers;
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         throw error;
