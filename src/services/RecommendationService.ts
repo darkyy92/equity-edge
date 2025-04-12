@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { StockTicker } from "@/lib/types/stock";
+import { Json } from "@/integrations/supabase/types";
 
 export interface StockRecommendation {
   id: number;
@@ -43,7 +44,11 @@ export const RecommendationService = {
         reason: rec.reason,
         confidence: rec.confidence,
         potentialGrowth: rec.potentialGrowth,
-        primaryDrivers: Array.isArray(rec.primaryDrivers) ? rec.primaryDrivers : [],
+        primaryDrivers: Array.isArray(rec.primaryDrivers) 
+          ? rec.primaryDrivers.map(driver => 
+              typeof driver === 'string' ? driver : String(driver)
+            )
+          : [],
         entryZone: rec.entryZone,
         entryZoneExplanation: rec.entryZoneExplanation,
         current_price: rec.current_price,
@@ -75,14 +80,14 @@ export const RecommendationService = {
       technicalSignals: {},
       marketContext: {},
       primaryDrivers: Array.isArray(recommendation.primaryDrivers) 
-        ? recommendation.primaryDrivers 
+        ? recommendation.primaryDrivers
         : [],
       aiAnalysis: {
         potentialGrowth: parseFloat(recommendation.potentialGrowth) || 0,
         confidence: recommendation.confidence,
         reason: recommendation.reason,
         primaryDrivers: Array.isArray(recommendation.primaryDrivers) 
-          ? recommendation.primaryDrivers 
+          ? recommendation.primaryDrivers
           : []
       }
     };
