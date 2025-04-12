@@ -33,7 +33,22 @@ export const RecommendationService = {
       }
 
       console.log(`Received ${data?.length || 0} recommendations from Supabase`);
-      return data || [];
+      
+      // Process and transform data to match StockRecommendation interface
+      return data?.map(rec => ({
+        id: rec.id,
+        symbol: rec.symbol,
+        name: rec.name,
+        timeframe: rec.timeframe,
+        reason: rec.reason,
+        confidence: rec.confidence,
+        potentialGrowth: rec.potentialGrowth,
+        primaryDrivers: Array.isArray(rec.primaryDrivers) ? rec.primaryDrivers : [],
+        entryZone: rec.entryZone,
+        entryZoneExplanation: rec.entryZoneExplanation,
+        current_price: rec.current_price,
+        created_at: rec.created_at
+      })) || [];
     } catch (error) {
       console.error('Error in getStockRecommendations:', error);
       throw error;

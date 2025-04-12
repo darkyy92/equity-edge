@@ -4,9 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecommendationsGrid from "./RecommendationsGrid";
 import { StockTicker } from "@/lib/types/stock";
 import { Button } from "@/components/ui/button";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCwIcon, TrendingUpIcon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
+import { Card } from "@/components/ui/card";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 

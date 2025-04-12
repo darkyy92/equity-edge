@@ -16,6 +16,8 @@ export const useStockRecommendations = (timeframe: TimeFrame) => {
         // Get recommendations from Supabase
         const supabaseRecommendations = await RecommendationService.getStockRecommendations(timeframe);
         
+        console.log('Supabase recommendations:', supabaseRecommendations);
+        
         // Convert to StockTicker format
         return supabaseRecommendations.map(rec => 
           RecommendationService.convertToStockTicker(rec)
