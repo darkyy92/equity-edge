@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import EntryRangeChart from "@/components/EntryRangeChart";
 import HoldSellIndicator from "@/components/HoldSellIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { createAIProvider } from "@/lib/ai/factory";
+import { StockRecommendationAdapter } from "@/services/StockRecommendationAdapter";
 
 type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
 
@@ -51,7 +53,9 @@ const StockAnalysis = () => {
         .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      
+      // Use our adapter to handle property differences
+      return data ? StockRecommendationAdapter.adaptForStockAnalysis(data) : null;
     },
     enabled: !!symbol,
   });
