@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { StockTicker } from "@/lib/types/stock";
 import { Json } from "@/integrations/supabase/types";
@@ -122,6 +121,8 @@ export const RecommendationService = {
       share_class_figi: '',
       last_updated_utc: recommendation.created_at || new Date().toISOString(),
       price: recommendation.current_price || 0,
+      entryZone: recommendation.entryZone,
+      entryZoneExplanation: recommendation.entryZoneExplanation,
       fundamentalMetrics: {},
       technicalSignals: {},
       marketContext: {},

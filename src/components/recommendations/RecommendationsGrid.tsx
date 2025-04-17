@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { TrendingUpIcon } from "lucide-react";
@@ -63,6 +62,8 @@ const RecommendationsGrid: React.FC<RecommendationsGridProps> = ({
             price={stock.price ?? 0}
             change={stock.change ?? 0}
             changePercent={stock.changePercent ?? 0}
+            entryZone={stock.entryZone}
+            entryZoneExplanation={stock.entryZoneExplanation}
             volume={stock.volume ?? 0}
             vwap={stock.vwap ?? 0}
             growthPotential={growthPotential}

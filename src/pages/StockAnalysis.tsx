@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -9,14 +8,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import LastUpdated from "@/components/LastUpdated";
-import { type AIAnalysisResponse } from "@/lib/ai/providers/types";
 import { cn } from "@/lib/utils";
 import AdvancedAnalysis from "@/components/AdvancedAnalysis";
 import ComprehensiveAnalysis from "@/components/ComprehensiveAnalysis";
 import EntryRangeChart from "@/components/EntryRangeChart";
 import HoldSellIndicator from "@/components/HoldSellIndicator";
 import { supabase } from "@/integrations/supabase/client";
-import { createAIProvider } from "@/lib/ai/factory";
 import { StockRecommendationAdapter } from "@/services/StockRecommendationAdapter";
 
 type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
@@ -30,17 +27,6 @@ const StockAnalysis = () => {
     queryFn: () => getDailyPrices(symbol || '', timeRange),
     enabled: !!symbol,
     refetchInterval: 60000,
-  });
-
-  const { data: aiAnalysis, isLoading: isAILoading } = useQuery<AIAnalysisResponse | null>({
-    queryKey: ['aiAnalysis', symbol],
-    queryFn: async () => {
-      const aiProvider = createAIProvider();
-      return aiProvider.analyzeStock(symbol || '', priceData);
-    },
-    enabled: !!symbol && !!priceData,
-    refetchInterval: 1800000,
-    staleTime: 1800000,
   });
 
   const { data: recommendation } = useQuery({
@@ -177,33 +163,15 @@ const StockAnalysis = () => {
 
         <ComprehensiveAnalysis symbol={symbol || ''} />
         
-        <Card className={cn(
-          "p-6 relative overflow-hidden",
-          isAILoading && "before:absolute before:inset-0 before:bg-gradient-to-r before:from-purple-400 before:via-pink-500 before:to-red-500 before:animate-pulse before:opacity-20"
-        )}>
+        <Card className="p-6">
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-xl font-semibold">AI Analysis</h2>
               <Badge variant="outline" className="mb-2">AI Generated</Badge>
             </div>
-            {isAILoading ? (
-              <div>
-                <p className="text-muted-foreground mb-4">Generating AI analysis, please wait...</p>
-                <div className="space-y-6 animate-pulse">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-4 bg-muted rounded w-1/2"></div>
-                  <div className="h-4 bg-muted rounded w-2/3"></div>
-                  <div className="h-4 bg-muted rounded w-4/5"></div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6 prose dark:prose-invert max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: aiAnalysis?.strategy || '' }} />
-                <div dangerouslySetInnerHTML={{ __html: aiAnalysis?.technical || '' }} />
-                <div dangerouslySetInnerHTML={{ __html: aiAnalysis?.market || '' }} />
-                <div dangerouslySetInnerHTML={{ __html: aiAnalysis?.risks || '' }} />
-              </div>
-            )}
+            <div className="space-y-6 prose dark:prose-invert max-w-none">
+              <p>AI analysis is currently unavailable.</p>
+            </div>
           </div>
         </Card>
       </div>

@@ -1,14 +1,17 @@
-
 import React, { useState } from "react";
 import RecommendationTabs from "@/components/recommendations/RecommendationTabs";
 import Sidebar from "@/components/Sidebar";
 import { useStockRecommendations } from "@/hooks/useStockRecommendations";
+import { useEntryZoneExplanation } from "@/hooks/useEntryZoneExplanation";
 
 type TimeFrame = "short-term" | "medium-term" | "long-term";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<TimeFrame>("short-term");
   const { recommendations, isLoading } = useStockRecommendations(activeTab);
+  
+  // Initialize the entry zone explanation handler
+  useEntryZoneExplanation();
 
   return (
     <div className="relative min-h-screen">

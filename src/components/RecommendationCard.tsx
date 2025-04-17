@@ -14,6 +14,8 @@ interface RecommendationCardProps {
   price: number;
   change: number;
   changePercent: number;
+  entryZone?: string;
+  entryZoneExplanation?: string;
   volume: number;
   vwap: number;
   growthPotential: number;
@@ -59,6 +61,8 @@ const RecommendationCard = ({
   reason,
   price,
   changePercent,
+  entryZone,
+  entryZoneExplanation,
   growthPotential,
   timeframe,
   primaryDrivers = [],
@@ -75,7 +79,8 @@ const RecommendationCard = ({
         
         <PriceSection 
           price={price}
-          changePercent={changePercent}
+          entryZone={entryZone || "N/A"}
+          entryZoneExplanation={entryZoneExplanation}
         />
 
         <DriversSection primaryDrivers={primaryDrivers} />

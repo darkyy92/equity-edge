@@ -73,6 +73,8 @@ export interface StockTicker {
   vwap?: number;
   isin?: string;
   valor_number?: string;
+  entryZone?: string;
+  entryZoneExplanation?: string;
   fundamentalMetrics?: FundamentalMetrics;
   technicalSignals?: TechnicalSignals;
   marketContext?: MarketContext;
