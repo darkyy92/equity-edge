@@ -24,18 +24,18 @@ export const RecommendationHeader = ({ recommendation, symbol, name, confidence 
       <div className="min-w-0">
         <div className="flex items-center space-x-2 mb-2">
           {/* Removed the Recommendation Badge: <Badge className={getBadgeColor(recommendation)}>{recommendation}</Badge> */}
-          <Badge variant="outline" className="bg-[#C6B67E]/10 text-[#C6B67E] border-[#C6B67E]/20">
+          <Badge className="bg-purple-900/30 text-purple-400 border-purple-800/50 text-sm px-2 py-1 rounded-full font-medium">
             {confidence}% Confidence
           </Badge>
         </div>
-        <h3 className="text-lg font-semibold truncate" title={symbol}>
+        <h3 className="text-2xl font-bold truncate" title={symbol}>
           {symbol}
         </h3>
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <p 
-                className="text-sm text-muted-foreground truncate"
+              <p
+                className="text-sm text-gray-400 truncate"
               >
                 {name}
               </p>
@@ -46,8 +46,8 @@ export const RecommendationHeader = ({ recommendation, symbol, name, confidence 
           </Tooltip>
         </TooltipProvider>
       </div>
-      <Button variant="ghost" size="icon" className="text-[#C6B67E]">
-        <StarIcon className="h-4 w-4" />
+      <Button variant="ghost" size="icon" className="text-yellow-500 hover:text-yellow-400">
+        <StarIcon className="h-5 w-5" />
       </Button>
     </div>
   );

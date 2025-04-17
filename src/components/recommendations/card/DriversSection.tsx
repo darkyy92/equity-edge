@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge";
-
 interface DriversSectionProps {
   primaryDrivers: string[];
 }
@@ -12,17 +10,17 @@ export const DriversSection = ({ primaryDrivers }: DriversSectionProps) => {
   }
 
   return (
-    // Stack badges vertically with gap
-    <div className="flex flex-col gap-2 mb-4 items-start">
-      {driversToDisplay.map((driver, index) => (
-        <Badge 
-          key={index} 
-          variant="outline"
-          className="bg-accent/50 text-foreground border-accent"
-        >
-          {driver}
-        </Badge>
-      ))}
+    <div className="mb-4">
+      <div className="flex flex-col gap-2">
+        {driversToDisplay.map((driver, index) => (
+          <span
+            key={index}
+            className="text-xs px-3 py-1 rounded-full bg-blue-600/20 text-blue-300 border border-blue-600/30 font-medium w-fit"
+          >
+            {driver}
+          </span>
+        ))}
+      </div>
     </div>
   );
 };

@@ -69,7 +69,7 @@ const RecommendationCard = ({
 }: RecommendationCardProps) => {
   return (
     <Link to={`/stock/${symbol}`}>
-      <Card className="bg-background/95 backdrop-blur-lg border-border/50 p-6 hover:shadow-lg transition-all duration-200">
+      <Card className="bg-background/95 backdrop-blur-lg border-border/30 p-8 hover:shadow-xl hover:border-primary/50 transition-all duration-200">
         <RecommendationHeader
           recommendation={recommendation}
           confidence={confidence}
