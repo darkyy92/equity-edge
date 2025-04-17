@@ -29,22 +29,22 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
               >
                 <TooltipTrigger asChild>
                   <button 
-                    className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-700/30 text-gray-400 hover:bg-gray-700/50"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       setIsTooltipOpen(!isTooltipOpen);
                     }}
                   >
-                    <Info className="h-3 w-3" />
+                    <Info className="h-4 w-4" />
                     <span className="sr-only">Entry zone explanation</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent 
-                  side="right" 
-                  align="start" 
-                  className="max-w-[220px] p-3 text-sm bg-card border-border shadow-md rounded-md z-50"
-                  sideOffset={5}
+                  side="right"
+                  align="start"
+                  className="max-w-xs p-4 text-sm bg-gray-800 text-gray-100 border border-gray-700 shadow-lg rounded-md z-50"
+                  sideOffset={10}
                 >
                   {entryZoneExplanation}
                 </TooltipContent>
