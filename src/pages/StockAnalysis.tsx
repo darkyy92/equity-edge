@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getDailyPrices } from "@/lib/api";
+// import { getDailyPrices } from "@/lib/api"; // Removed as src/lib/api.ts is deleted
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,18 +16,16 @@ import HoldSellIndicator from "@/components/HoldSellIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { StockRecommendationAdapter } from "@/services/StockRecommendationAdapter";
 
-type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
+// type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y"; // Removed as chart is removed
 
 const StockAnalysis = () => {
   const { symbol } = useParams();
-  const [timeRange, setTimeRange] = useState<TimeRange>("1W");
+  // const [timeRange, setTimeRange] = useState<TimeRange>("1W"); // Removed as chart is removed
 
-  const { data: priceData, dataUpdatedAt } = useQuery({
-    queryKey: ['stockPrice', symbol, timeRange],
-    queryFn: () => getDailyPrices(symbol || '', timeRange),
-    enabled: !!symbol,
-    refetchInterval: 60000,
-  });
+  // Removed priceData query as src/lib/api.ts is deleted
+  // Removed priceData query as src/lib/api.ts is deleted
+  const priceData: any = null; // Placeholder
+  const dataUpdatedAt: number | undefined = undefined; // Placeholder
 
   const { data: recommendation } = useQuery({
     queryKey: ['stockRecommendation', symbol],
@@ -48,37 +46,43 @@ const StockAnalysis = () => {
 
   if (!symbol) return <div>Invalid stock symbol</div>;
 
-  const change = priceData ? priceData.c - priceData.o : 0;
-  const changePercent = priceData ? (change / priceData.o) * 100 : 0;
-  const isPositive = change >= 0;
+  // Removed change calculations as historical open price is not available from recommendation
+  // const change = priceData ? priceData.c - priceData.o : 0;
+  // const changePercent = priceData ? (change / priceData.o) * 100 : 0;
+  // const isPositive = change >= 0;
 
-  const timeRanges: TimeRange[] = ["1D", "1W", "1M", "3M", "1Y", "5Y"];
+  // const timeRanges: TimeRange[] = ["1D", "1W", "1M", "3M", "1Y", "5Y"]; // Removed as chart is removed
 
-  return (
-    <div className="min-h-screen bg-background p-6 space-y-6">
+ return (
+   <div className="min-h-screen bg-background p-6 space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center">
               <h1 className="text-4xl font-bold">{symbol}</h1>
-              {dataUpdatedAt && <LastUpdated timestamp={dataUpdatedAt} />}
+              {/* Removed LastUpdated as dataUpdatedAt is no longer available */}
+              {/* {dataUpdatedAt && <LastUpdated timestamp={dataUpdatedAt} />} */}
             </div>
+            {/* Use current_price from recommendation */}
             <p className="text-2xl font-semibold">
-              ${priceData?.c.toFixed(2) || '0.00'}
-              <span className={`ml-2 text-lg ${isPositive ? 'text-success' : 'text-error'}`}>
+              ${recommendation?.current_price?.toFixed(2) ?? 'N/A'}
+              {/* Removed change display */}
+              {/* <span className={`ml-2 text-lg ${isPositive ? 'text-success' : 'text-error'}`}>
                 {isPositive ? '+' : ''}{change.toFixed(2)} ({changePercent.toFixed(2)}%)
-              </span>
+              </span> */}
             </p>
           </div>
-          {isPositive ? (
+          {/* Removed trend icon */}
+          {/* {isPositive ? (
             <TrendingUpIcon className="w-8 h-8 text-success" />
           ) : (
             <TrendingDownIcon className="w-8 h-8 text-error" />
-          )}
+          )} */}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="p-6">
+          {/* Removed Price Chart Card as historical data is not available */}
+          {/* <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Price Chart</h2>
               <div className="flex gap-2">
@@ -96,9 +100,9 @@ const StockAnalysis = () => {
             </div>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={priceData?.chartData || []}>
+                <LineChart data={[]}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.1} />
-                  <XAxis 
+                  <XAxis
                     dataKey="timestamp"
                     stroke="#888888"
                     fontSize={12}
@@ -125,9 +129,9 @@ const StockAnalysis = () => {
                     formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
                     cursor={{ stroke: '#8884d8', strokeWidth: 1 }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="price" 
+                  <Line
+                    type="monotone"
+                    dataKey="price"
                     stroke="#8884d8"
                     strokeWidth={2}
                     dot={false}
@@ -136,14 +140,25 @@ const StockAnalysis = () => {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </Card> */}
+          <Card className="p-6">
+             <h2 className="text-xl font-semibold mb-4">Price Chart</h2>
+             <p className="text-muted-foreground">Historical price chart data is currently unavailable.</p>
           </Card>
-          
+
           <div className="space-y-6">
-            {recommendation?.entry_range && (
-              <EntryRangeChart 
-                data={priceData?.chartData || []}
+            {/* Removed EntryRangeChart as historical data is not available */}
+            {/* {recommendation?.entry_range && (
+              <EntryRangeChart
+                data={[]}
                 entryRange={recommendation.entry_range}
               />
+            )} */}
+            {recommendation?.entry_range && (
+               <Card className="p-6">
+                 <h2 className="text-xl font-semibold mb-4">Entry Range Chart</h2>
+                 <p className="text-muted-foreground">Entry range chart data is currently unavailable.</p>
+               </Card>
             )}
             
             {recommendation?.hold_sell_recommendation && (
@@ -156,9 +171,10 @@ const StockAnalysis = () => {
           </div>
         </div>
 
-        <AdvancedAnalysis 
-          symbol={symbol || ''} 
-          historicalData={priceData?.chartData || []}
+        {/* Removed historicalData prop from AdvancedAnalysis */}
+        <AdvancedAnalysis
+          symbol={symbol || ''}
+          historicalData={[]} // Pass empty array as historical data is not available
         />
 
         <ComprehensiveAnalysis symbol={symbol || ''} />

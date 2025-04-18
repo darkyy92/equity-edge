@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { SearchIcon, Loader2Icon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { searchStocks } from "@/lib/api";
+// import { searchStocks } from "@/lib/api"; // Removed as src/lib/api.ts is deleted
 import { useDebounce } from "@/hooks/useDebounce";
 
 const SearchBar = () => {
@@ -13,11 +13,14 @@ const SearchBar = () => {
   const debouncedQuery = useDebounce(query, 300);
   const navigate = useNavigate();
 
-  const { data: searchResults, isLoading } = useQuery({
-    queryKey: ['stockSearch', debouncedQuery],
-    queryFn: () => searchStocks(debouncedQuery),
-    enabled: debouncedQuery.length > 0,
-  });
+  // Removed searchResults query as src/lib/api.ts is deleted
+  const searchResults: any[] | undefined = undefined; // Placeholder
+  const isLoading = false; // Placeholder
+  // const { data: searchResults, isLoading } = useQuery({
+  //   queryKey: ['stockSearch', debouncedQuery],
+  //   queryFn: () => searchStocks(debouncedQuery),
+  //   enabled: debouncedQuery.length > 0,
+  // });
 
   const handleStockClick = (symbol: string) => {
     setQuery("");
@@ -41,9 +44,13 @@ const SearchBar = () => {
         />
       </div>
 
+      {/* Modified search results display as search functionality is removed */}
       {isResultsVisible && query && (
         <Card className="absolute z-50 w-full mt-1 p-2 max-h-[300px] overflow-y-auto bg-background/95 backdrop-blur-lg border-border/50">
-          {isLoading ? (
+          <div className="p-4 text-center text-muted-foreground">
+            Search is currently unavailable.
+          </div>
+          {/* {isLoading ? (
             <div className="flex items-center justify-center p-4">
               <Loader2Icon className="animate-spin h-4 w-4" />
             </div>
@@ -64,7 +71,7 @@ const SearchBar = () => {
             <div className="p-4 text-center text-muted-foreground">
               No results found
             </div>
-          )}
+          )} */}
         </Card>
       )}
     </div>

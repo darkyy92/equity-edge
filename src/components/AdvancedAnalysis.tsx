@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { generateMonteCarlo } from "@/utils/monteCarloSimulation";
-import { calculateElliottWave } from "@/utils/elliottWaveAnalysis";
+// import { generateMonteCarlo } from "@/utils/monteCarloSimulation"; // Removed as file is deleted
+// import { calculateElliottWave } from "@/utils/elliottWaveAnalysis"; // Removed as file is deleted
 import ElliottWaveChart from "./charts/ElliottWaveChart";
 import MonteCarloChart from "./charts/MonteCarloChart";
 
@@ -15,77 +15,31 @@ interface AdvancedAnalysisProps {
 const AdvancedAnalysis = ({ symbol, historicalData }: AdvancedAnalysisProps) => {
   const [timeframe, setTimeframe] = useState("1M");
 
-  const { data: analysis, isLoading } = useQuery({
-    queryKey: ["advancedAnalysis", symbol, timeframe],
-    queryFn: async () => {
-      const simulatedPaths = generateMonteCarlo(historicalData, 10000);
-      const elliotWavePatterns = calculateElliottWave(historicalData);
-      
-      return {
-        monteCarlo: simulatedPaths,
-        elliottWave: elliotWavePatterns,
-      };
-    },
-    enabled: !!historicalData && historicalData.length > 0,
-  });
+  // Removed analysis query as utils are deleted
+  const analysis: any = null; // Placeholder
+  const isLoading = false; // Placeholder
+  // const { data: analysis, isLoading } = useQuery({
+  //   queryKey: ["advancedAnalysis", symbol, timeframe],
+  //   queryFn: async () => {
+  //     const simulatedPaths = generateMonteCarlo(historicalData, 10000);
+  //     const elliotWavePatterns = calculateElliottWave(historicalData);
+  //
+  //     return {
+  //       monteCarlo: simulatedPaths,
+  //       elliottWave: elliotWavePatterns,
+  //     };
+  //   },
+  //   enabled: !!historicalData && historicalData.length > 0,
+  // });
 
-  if (isLoading) {
-    return (
-      <Card className="p-6 animate-pulse">
-        <div className="h-4 bg-muted rounded w-1/4 mb-4"></div>
-        <div className="space-y-3">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
-        </div>
-      </Card>
-    );
-  }
-
+  // Render placeholder as analysis is removed
   return (
     <Card className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">Advanced Technical Analysis</h3>
         <Badge variant="outline">AI Powered</Badge>
       </div>
-
-      <div className="space-y-6">
-        <div>
-          <h4 className="font-medium mb-2">Elliott Wave Pattern</h4>
-          <ElliottWaveChart 
-            data={historicalData} 
-            analysis={analysis?.elliottWave}
-          />
-          <div className="mt-4 space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Current Position: {analysis?.elliottWave.currentWave}
-              {analysis?.elliottWave.confidence > 0 && 
-                ` (${analysis.elliottWave.confidence.toFixed(1)}% confidence)`
-              }
-            </p>
-            {analysis?.elliottWave.nextTarget && (
-              <p className="text-sm text-muted-foreground">
-                Next target: ${analysis.elliottWave.nextTarget.toFixed(2)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <h4 className="font-medium mb-2">Monte Carlo Simulation</h4>
-          <MonteCarloChart data={analysis?.monteCarlo || []} />
-        </div>
-
-        <div className="space-y-2">
-          <h4 className="font-medium">Probability Analysis</h4>
-          <p className="text-sm text-muted-foreground">
-            Based on 10,000 Monte Carlo simulations over {timeframe}:
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>70% chance of price between ${analysis?.monteCarlo[0]?.lowerBound.toFixed(2)} and ${analysis?.monteCarlo[0]?.upperBound.toFixed(2)}</li>
-            <li>Median projected price: ${analysis?.monteCarlo[0]?.median.toFixed(2)}</li>
-          </ul>
-        </div>
-      </div>
+      <p className="text-muted-foreground">Advanced analysis is currently unavailable.</p>
     </Card>
   );
 };
