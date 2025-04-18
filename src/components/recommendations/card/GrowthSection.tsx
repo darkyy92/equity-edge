@@ -2,7 +2,6 @@ import { useState } from "react";
 import { TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 
 interface GrowthSectionProps {
   growthPotential: number;
@@ -15,10 +14,6 @@ const REASON_CHAR_LIMIT = 150;
 export const GrowthSection = ({ growthPotential, timeframe, reason }: GrowthSectionProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const showReadMoreButton = reason.length > REASON_CHAR_LIMIT;
-
-  // Map growth potential percentage to a 0-100 scale for the progress bar
-  // Assuming a range of -50% to +50% for mapping purposes, adjust as needed
-  const progressValue = Math.max(0, Math.min(100, (growthPotential + 50) * 1)); // Scale -50 to 0, 0 to 50, 50 to 100
 
   return (
     <div className="border-t border-border/50 pt-4">
@@ -44,7 +39,6 @@ export const GrowthSection = ({ growthPotential, timeframe, reason }: GrowthSect
           </Tooltip>
         </TooltipProvider>
       </div>
-      <Progress value={progressValue} className={`w-full h-1.5 mb-3 rounded-full ${growthPotential >= 0 ? '[&>*]:bg-success' : '[&>*]:bg-destructive]'}`} />
       <p
         className={`text-sm text-muted-foreground ${!isExpanded ? 'line-clamp-3' : ''}`}
       >
