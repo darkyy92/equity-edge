@@ -69,7 +69,7 @@ const RecommendationCard = ({
 }: RecommendationCardProps) => {
   return (
     <Link to={`/stock/${symbol}`} className="stock-card-glow block rounded-lg relative"> {/* Remove overflow-hidden */}
-      <Card className="bg-background/95 backdrop-blur-lg border-border/30 p-8 transition-all duration-200 h-full"> {/* Add h-full to ensure card fills link */}
+      <Card className="bg-background/95 backdrop-blur-lg border-border/30 p-4 md:p-6 lg:p-8 transition-all duration-200 h-full"> {/* Add h-full to ensure card fills link */}
         <RecommendationHeader
           recommendation={recommendation}
           confidence={confidence}

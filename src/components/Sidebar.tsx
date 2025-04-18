@@ -7,7 +7,7 @@ const Sidebar = () => {
   const location = useLocation();
 
   return (
-    <div className="w-64 min-h-screen bg-black/20 backdrop-blur-md border-r border-white/10 p-4 flex flex-col">
+    <div className="hidden md:flex w-64 min-h-screen bg-black/20 backdrop-blur-md border-r border-white/10 p-4 flex-col">
       <div className="flex items-center gap-2 mb-6">
         <img src="/lovable-uploads/c61bb094-f3cc-417b-8cbe-ccb9ad907c73.png" alt="Logo" className="w-8 h-8" />
         <span className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">

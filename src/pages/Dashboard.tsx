@@ -32,7 +32,7 @@ const Dashboard = () => {
 
       <div className="relative flex min-h-screen z-10">
         <Sidebar />
-        <div className="flex-1 p-6 overflow-hidden">
+        <div className="flex-1 p-4 md:p-6 overflow-hidden">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="animate-fade-in">
               <div className="flex items-center gap-2 text-sm font-medium mb-4">
