@@ -81,3 +81,22 @@
 .bg-gradient-radial {
   background-image: radial-gradient(circle at center, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%);
 }
+
+/* Remove previous hover rule */
+
+a.stock-card-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit; /* Inherit border-radius from the link */
+  box-shadow: 0 0 0px 0px transparent; /* Initial transparent shadow */
+  transition: box-shadow 0.2s ease-in-out;
+  pointer-events: none; /* Ensure pseudo-element doesn't block clicks */
+  z-index: -1; /* Place behind the card content */
+}
+
+a.stock-card-glow:hover::after {
+  box-shadow:
+    0 0 8px rgba(79, 70, 229, 0.35),  /* Softer, tighter Blue glow */
+    0 0 16px rgba(147, 51, 234, 0.35); /* Softer, tighter Purple glow */
+}

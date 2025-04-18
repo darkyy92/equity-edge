@@ -24,7 +24,7 @@ export const GrowthSection = ({ growthPotential, timeframe, reason }: GrowthSect
           ) : (
             <TrendingDownIcon className="w-4 h-4 text-destructive" />
           )}
-          <span className="text-sm font-medium">Growth Potential ({timeframe})</span>
+          <span className="text-sm font-medium">Growth Potential</span>
         </div>
         <TooltipProvider>
           <Tooltip>
@@ -40,18 +40,19 @@ export const GrowthSection = ({ growthPotential, timeframe, reason }: GrowthSect
         </TooltipProvider>
       </div>
       <p
-        className={`text-sm text-muted-foreground ${!isExpanded ? 'line-clamp-3' : ''}`}
+        className={`text-base text-muted-foreground mt-2 mb-4 ${!isExpanded ? 'line-clamp-3' : ''}`}
       >
         {reason}
       </p>
       {showReadMoreButton && (
         <Button
-          variant="link"
+          variant="outline"
+          size="sm"
           onClick={(e) => {
             e.preventDefault();
             setIsExpanded(!isExpanded);
           }}
-          className="h-auto p-0 text-xs text-blue-400 hover:text-blue-300 hover:underline mt-1"
+          className="mt-2"
         >
           {isExpanded ? "Show Less" : "Read More"}
         </Button>
