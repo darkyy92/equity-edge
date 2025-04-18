@@ -1,10 +1,8 @@
 import { ArrowRight, LineChart, Brain, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
 export const HeroSection = () => {
-  return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 pb-16 overflow-hidden">
+  return <div className="relative min-h-screen flex flex-col items-center justify-center px-4 pb-16 overflow-hidden">
       {/* Primary gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#1A1F2C] via-[#222222] to-[#1E1E3F]" />
       
@@ -43,9 +41,7 @@ export const HeroSection = () => {
           </h1>
         </div>
         
-        <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto">
-          Make smarter investment decisions with our advanced AI analysis platform. Get real-time insights, comprehensive analysis, and data-driven recommendations.
-        </p>
+        <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto">Make smarter investment decisions with our advanced AI analysis platform. Get real-time insights, comprehensive analysis, and data-driven recommendations. </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link to="/dashboard">
@@ -74,6 +70,5 @@ export const HeroSection = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
