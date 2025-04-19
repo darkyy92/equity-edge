@@ -1,6 +1,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { useState } from "react";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface PriceSectionProps {
   price: number;
@@ -10,7 +11,16 @@ interface PriceSectionProps {
 
 export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSectionProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
-  
+  const isMobile = useIsMobile();
+
+  const handleEntryZoneClick = (e: React.MouseEvent) => {
+    if (isMobile) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsTooltipOpen(!isTooltipOpen);
+    }
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 mb-4">
       <div>
@@ -30,11 +40,7 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
                 <TooltipTrigger asChild>
                   <button
                     className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-700/30 text-gray-400 hover:bg-gray-700/50"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsTooltipOpen(!isTooltipOpen);
-                    }}
+                    onClick={handleEntryZoneClick}
                   >
                     <Info className="h-4 w-4" />
                     <span className="sr-only">Entry zone explanation</span>
@@ -52,7 +58,7 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
             </TooltipProvider>
           )}
         </div>
-        <p className="text-lg font-semibold text-yellow-500">
+        <p className="text-lg font-semibold text-yellow-500" onClick={handleEntryZoneClick}>
           {entryZone || "N/A"}
         </p>
       </div>

@@ -2,6 +2,8 @@ interface DriversSectionProps {
   primaryDrivers: string[];
 }
 
+import { CheckIcon } from 'lucide-react';
+
 export const DriversSection = ({ primaryDrivers }: DriversSectionProps) => {
   const driversToDisplay = primaryDrivers || [];
 
@@ -11,16 +13,17 @@ export const DriversSection = ({ primaryDrivers }: DriversSectionProps) => {
 
   return (
     <div className="mb-4">
-      <div className="flex flex-col gap-2">
+      <ul className="list-none p-0 m-0 space-y-2"> {/* Changed to unordered list, removed default styling and added space between items */}
         {driversToDisplay.map((driver, index) => (
-          <span
+          <li
             key={index}
-            className="text-xs px-3 py-1 rounded-full bg-blue-600/20 text-blue-300 border border-blue-600/30 font-medium w-fit"
+            className="flex items-start text-sm text-white/80"
           >
-            {driver}
-          </span>
+            <CheckIcon className="flex-shrink-0 h-4 w-4 text-white mr-2 mt-0.5" /> {/* Changed checkmark icon color to white */}
+            <span>{driver}</span> {/* Wrapped driver text in a span for better control */}
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };
