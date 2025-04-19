@@ -49,7 +49,7 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
                 <TooltipContent
                   side="right"
                   align="start"
-                  className="max-w-xs p-4 text-sm bg-gray-800 text-gray-100 border border-gray-700 shadow-lg rounded-md z-50"
+                  className="p-4 text-sm bg-gray-800 text-gray-100 border border-gray-700 shadow-lg rounded-md z-50"
                   sideOffset={10}
                 >
                   {entryZoneExplanation}
@@ -58,7 +58,12 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
             </TooltipProvider>
           )}
         </div>
-        <p className="text-lg font-semibold text-yellow-500" onClick={handleEntryZoneClick}>
+        <p
+          className="text-lg font-semibold text-yellow-500"
+          onClick={handleEntryZoneClick}
+          role="button"
+          tabIndex={0}
+        >
           {entryZone || "N/A"}
         </p>
       </div>
