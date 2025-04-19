@@ -1,6 +1,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils"; // Import cn utility
 import useIsMobile from "@/hooks/useIsMobile";
 
 interface PriceSectionProps {
@@ -27,7 +28,15 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
         <p className="text-sm text-muted-foreground mb-1">Current Price</p>
         <p className="text-xl font-bold text-gray-100">${price.toFixed(2)}</p>
       </div>
-      <div>
+      <div
+        className={cn(
+          "rounded-md p-2 cursor-pointer transition-colors duration-200", // Increased padding
+          isMobile && "border border-gray-700/50 bg-gray-800/30" // Apply subtle border and background on mobile
+        )}
+        onClick={handleEntryZoneClick} // Moved click handler here
+        role="button" // Moved role here
+        tabIndex={0} // Moved tabIndex here
+      >
         <div className="flex items-center gap-1.5 mb-1">
           <p className="text-sm text-muted-foreground">Entry Zone</p>
           {entryZoneExplanation && (
@@ -38,18 +47,18 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
                 onOpenChange={setIsTooltipOpen}
               >
                 <TooltipTrigger asChild>
+                  {/* Removed onClick from button, parent div handles click */}
                   <button
                     className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-700/30 text-gray-400 hover:bg-gray-700/50"
-                    onClick={handleEntryZoneClick}
                   >
                     <Info className="h-4 w-4" />
                     <span className="sr-only">Entry zone explanation</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent
-                  side="right"
-                  align="start"
-                  className="p-4 text-sm bg-gray-800 text-gray-100 border border-gray-700 shadow-lg rounded-md z-50"
+                  side="bottom" // Changed side to bottom
+                  align="center" // Changed align to center
+                  className="w-auto p-4 text-sm bg-gray-800 text-gray-100 border border-gray-700 shadow-lg rounded-md z-50 whitespace-normal" // Removed max-w-xs
                   sideOffset={10}
                 >
                   {entryZoneExplanation}
@@ -60,9 +69,7 @@ export const PriceSection = ({ price, entryZone, entryZoneExplanation }: PriceSe
         </div>
         <p
           className="text-lg font-semibold text-yellow-500"
-          onClick={handleEntryZoneClick}
-          role="button"
-          tabIndex={0}
+          // Removed onClick from p tag, parent div handles click
         >
           {entryZone || "N/A"}
         </p>

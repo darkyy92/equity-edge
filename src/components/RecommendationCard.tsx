@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
 import { RecommendationHeader } from "./recommendations/card/RecommendationHeader";
 import { PriceSection } from "./recommendations/card/PriceSection";
 import { DriversSection } from "./recommendations/card/DriversSection";
@@ -68,7 +67,7 @@ const RecommendationCard = ({
   primaryDrivers = [],
 }: RecommendationCardProps) => {
   return (
-    <Link to={`/stock/${symbol}`} className="stock-card-glow block rounded-lg relative"> {/* Remove overflow-hidden */}
+    <div className="stock-card-glow block rounded-lg relative"> {/* Remove overflow-hidden */}
       <Card className="bg-background/95 backdrop-blur-lg border-border/30 p-4 md:p-6 lg:p-8 transition-all duration-200 h-full"> {/* Add h-full to ensure card fills link */}
         <RecommendationHeader
           recommendation={recommendation}
@@ -91,7 +90,7 @@ const RecommendationCard = ({
           reason={reason}
         />
       </Card>
-    </Link>
+    </div>
   );
 };
 
